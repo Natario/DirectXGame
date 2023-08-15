@@ -38,22 +38,63 @@ void Game::Go()
 
 void Game::UpdateModel()
 {
+	// increase speed in direction of key press
 	if (wnd.kbd.KeyIsPressed(VK_UP))
-		yPos -= 5;
+	{
+		if(abs(yVel) < maxVel)
+			yVel -= accel;
+	}
 	if (wnd.kbd.KeyIsPressed(VK_RIGHT))
-		xPos += 5;
+	{
+		if (abs(xVel) < maxVel)
+			xVel += accel;
+	}
 	if (wnd.kbd.KeyIsPressed(VK_DOWN))
-		yPos += 5;
+	{
+		if (abs(yVel) < maxVel)
+			yVel += accel;
+	}
 	if (wnd.kbd.KeyIsPressed(VK_LEFT))
-		xPos -= 5;
+	{
+		if (abs(xVel) < maxVel)
+			xVel -= accel;
+	}
 	
-	if (wnd.kbd.KeyIsPressed(VK_CONTROL))
+	// decellerate if no key pressed
+	if (!wnd.kbd.KeyIsPressed(VK_UP) && yVel < 0)
+		yVel += accel;
+	if (!wnd.kbd.KeyIsPressed(VK_DOWN) && yVel > 0)
+		yVel -= accel;
+	if (!wnd.kbd.KeyIsPressed(VK_RIGHT) && xVel > 0)
+		xVel -= accel;
+	if (!wnd.kbd.KeyIsPressed(VK_LEFT) && xVel < 0)
+		xVel += accel;
+	
+	// update position depending on speed if new position is not outside screen (plus a margin for all the recticle pixels)
+	if ((xPos + xVel > 0 + crosshairSize) && (xPos + xVel < Graphics::ScreenWidth - crosshairSize))
+		xPos += xVel;
+	else
+		xVel = 0;
+	if ((yPos + yVel > 0 + crosshairSize) && (yPos + yVel < Graphics::ScreenHeight - crosshairSize))
+		yPos += yVel;
+	else
+		yVel = 0;
+	
+	// detect colision with enemy
+	if((xPos <= xEnemy + crosshairSize) && (xPos >= xEnemy - crosshairSize) && (yPos <= yEnemy + crosshairSize) && (yPos >= yEnemy - crosshairSize))
 	{
 		colorR = 255;
 		colorG = 0;
 		colorB = 0;
 	}
+	else
+	{
+		colorR = 255;
+		colorG = 255;
+		colorB = 255;
+	}
 
+	// change shape of recticle
 	isAlternativeShape = wnd.kbd.KeyIsPressed(VK_SHIFT);
 }
 
@@ -62,52 +103,63 @@ void Game::ComposeFrame()
 
 	if (!isAlternativeShape)
 	{
-		// Draw crosshair
-		// horizontal line
-		gfx.PutPixel(xPos - 5, yPos, colorR, colorG, colorB);
-		gfx.PutPixel(xPos - 4, yPos, colorR, colorG, colorB);
-		gfx.PutPixel(xPos - 3, yPos, colorR, colorG, colorB);
-		gfx.PutPixel(xPos + 3, yPos, colorR, colorG, colorB);
-		gfx.PutPixel(xPos + 4, yPos, colorR, colorG, colorB);
-		gfx.PutPixel(xPos + 5, yPos, colorR, colorG, colorB);
-		// vertical line
-		gfx.PutPixel(xPos, yPos - 5, colorR, colorG, colorB);
-		gfx.PutPixel(xPos, yPos - 4, colorR, colorG, colorB);
-		gfx.PutPixel(xPos, yPos - 3, colorR, colorG, colorB);
-		gfx.PutPixel(xPos, yPos + 3, colorR, colorG, colorB);
-		gfx.PutPixel(xPos, yPos + 4, colorR, colorG, colorB);
-		gfx.PutPixel(xPos, yPos + 5, colorR, colorG, colorB);
+		drawCrosshair(xPos, yPos, colorR, colorG, colorB);
 	}
 	else
 	{
-		// Draw rectangle
-		// top line
-		gfx.PutPixel(xPos - 5, yPos - 5, colorR, colorG, colorB);
-		gfx.PutPixel(xPos - 4, yPos - 5, colorR, colorG, colorB);
-		gfx.PutPixel(xPos - 3, yPos - 5, colorR, colorG, colorB);
-		gfx.PutPixel(xPos + 3, yPos - 5, colorR, colorG, colorB);
-		gfx.PutPixel(xPos + 4, yPos - 5, colorR, colorG, colorB);
-		gfx.PutPixel(xPos + 5, yPos - 5, colorR, colorG, colorB);
-		// bottom line
-		gfx.PutPixel(xPos - 5, yPos + 5, colorR, colorG, colorB);
-		gfx.PutPixel(xPos - 4, yPos + 5, colorR, colorG, colorB);
-		gfx.PutPixel(xPos - 3, yPos + 5, colorR, colorG, colorB);
-		gfx.PutPixel(xPos + 3, yPos + 5, colorR, colorG, colorB);
-		gfx.PutPixel(xPos + 4, yPos + 5, colorR, colorG, colorB);
-		gfx.PutPixel(xPos + 5, yPos + 5, colorR, colorG, colorB);
-		// left line
-		gfx.PutPixel(xPos - 5, yPos - 5, colorR, colorG, colorB);
-		gfx.PutPixel(xPos - 5, yPos - 4, colorR, colorG, colorB);
-		gfx.PutPixel(xPos - 5, yPos - 3, colorR, colorG, colorB);
-		gfx.PutPixel(xPos - 5, yPos + 3, colorR, colorG, colorB);
-		gfx.PutPixel(xPos - 5, yPos + 4, colorR, colorG, colorB);
-		gfx.PutPixel(xPos - 5, yPos + 5, colorR, colorG, colorB);
-		// right line
-		gfx.PutPixel(xPos + 5, yPos - 5, colorR, colorG, colorB);
-		gfx.PutPixel(xPos + 5, yPos - 4, colorR, colorG, colorB);
-		gfx.PutPixel(xPos + 5, yPos - 3, colorR, colorG, colorB);
-		gfx.PutPixel(xPos + 5, yPos + 3, colorR, colorG, colorB);
-		gfx.PutPixel(xPos + 5, yPos + 4, colorR, colorG, colorB);
-		gfx.PutPixel(xPos + 5, yPos + 5, colorR, colorG, colorB);
+		drawRectangle(xPos, yPos, colorR, colorG, colorB);
 	}
+
+	// enemy rectangle
+	drawRectangle(xEnemy, yEnemy, 255, 255, 255);
+}
+
+void Game::drawCrosshair(int xPos, int yPos, int colorR, int colorG, int colorB)
+{
+	// horizontal line
+	gfx.PutPixel(xPos - crosshairSize + 0, yPos, colorR, colorG, colorB);
+	gfx.PutPixel(xPos - crosshairSize + 1, yPos, colorR, colorG, colorB);
+	gfx.PutPixel(xPos - crosshairSize + 2, yPos, colorR, colorG, colorB);
+	gfx.PutPixel(xPos + crosshairSize - 2, yPos, colorR, colorG, colorB);
+	gfx.PutPixel(xPos + crosshairSize - 1, yPos, colorR, colorG, colorB);
+	gfx.PutPixel(xPos + crosshairSize - 0, yPos, colorR, colorG, colorB);
+	// vertical line
+	gfx.PutPixel(xPos, yPos - crosshairSize + 0, colorR, colorG, colorB);
+	gfx.PutPixel(xPos, yPos - crosshairSize + 1, colorR, colorG, colorB);
+	gfx.PutPixel(xPos, yPos - crosshairSize + 2, colorR, colorG, colorB);
+	gfx.PutPixel(xPos, yPos + crosshairSize - 2, colorR, colorG, colorB);
+	gfx.PutPixel(xPos, yPos + crosshairSize - 1, colorR, colorG, colorB);
+	gfx.PutPixel(xPos, yPos + crosshairSize - 0, colorR, colorG, colorB);
+}
+
+void Game::drawRectangle(int xPos, int yPos, int colorR, int colorG, int colorB)
+{
+	// top line
+	gfx.PutPixel(xPos - crosshairSize + 0, yPos - crosshairSize, colorR, colorG, colorB);
+	gfx.PutPixel(xPos - crosshairSize + 1, yPos - crosshairSize, colorR, colorG, colorB);
+	gfx.PutPixel(xPos - crosshairSize + 2, yPos - crosshairSize, colorR, colorG, colorB);
+	gfx.PutPixel(xPos + crosshairSize - 2, yPos - crosshairSize, colorR, colorG, colorB);
+	gfx.PutPixel(xPos + crosshairSize - 1, yPos - crosshairSize, colorR, colorG, colorB);
+	gfx.PutPixel(xPos + crosshairSize - 0, yPos - crosshairSize, colorR, colorG, colorB);
+	// bottom line
+	gfx.PutPixel(xPos - crosshairSize + 0, yPos + crosshairSize, colorR, colorG, colorB);
+	gfx.PutPixel(xPos - crosshairSize + 1, yPos + crosshairSize, colorR, colorG, colorB);
+	gfx.PutPixel(xPos - crosshairSize + 2, yPos + crosshairSize, colorR, colorG, colorB);
+	gfx.PutPixel(xPos + crosshairSize - 2, yPos + crosshairSize, colorR, colorG, colorB);
+	gfx.PutPixel(xPos + crosshairSize - 1, yPos + crosshairSize, colorR, colorG, colorB);
+	gfx.PutPixel(xPos + crosshairSize - 0, yPos + crosshairSize, colorR, colorG, colorB);
+	// left line
+	gfx.PutPixel(xPos - crosshairSize, yPos - crosshairSize + 0, colorR, colorG, colorB);
+	gfx.PutPixel(xPos - crosshairSize, yPos - crosshairSize + 1, colorR, colorG, colorB);
+	gfx.PutPixel(xPos - crosshairSize, yPos - crosshairSize + 2, colorR, colorG, colorB);
+	gfx.PutPixel(xPos - crosshairSize, yPos + crosshairSize - 2, colorR, colorG, colorB);
+	gfx.PutPixel(xPos - crosshairSize, yPos + crosshairSize - 1, colorR, colorG, colorB);
+	gfx.PutPixel(xPos - crosshairSize, yPos + crosshairSize - 0, colorR, colorG, colorB);
+	// right line		crosshairSize
+	gfx.PutPixel(xPos + crosshairSize, yPos - crosshairSize + 0, colorR, colorG, colorB);
+	gfx.PutPixel(xPos + crosshairSize, yPos - crosshairSize + 1, colorR, colorG, colorB);
+	gfx.PutPixel(xPos + crosshairSize, yPos - crosshairSize + 2, colorR, colorG, colorB);
+	gfx.PutPixel(xPos + crosshairSize, yPos + crosshairSize - 2, colorR, colorG, colorB);
+	gfx.PutPixel(xPos + crosshairSize, yPos + crosshairSize - 1, colorR, colorG, colorB);
+	gfx.PutPixel(xPos + crosshairSize, yPos + crosshairSize - 0, colorR, colorG, colorB);
 }

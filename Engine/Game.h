@@ -36,6 +36,8 @@ private:
 	void UpdateModel();
 	/********************************/
 	/*  User Functions              */
+	void drawCrosshair(int xPos, int yPos, int colorR, int colorG, int colorB);
+	void drawRectangle(int xPos, int yPos, int colorR, int colorG, int colorB);
 	/********************************/
 private:
 	MainWindow& wnd;
@@ -44,9 +46,16 @@ private:
 	/*  User Variables              */
 	int xPos{ Graphics::ScreenWidth / 2 };
 	int yPos{ Graphics::ScreenHeight / 2 };
+	int xVel{ 0 };
+	int yVel{ 0 };
+	int crosshairSize{ 10 };
 	int colorR{ 255 };
 	int colorG{ 255 };
 	int colorB{ 255 };
 	bool isAlternativeShape{ false };
+	int accel{ 1 };
+	int maxVel{ 3 };
+	int xEnemy{ 300 };
+	int yEnemy{ 300 };
 	/********************************/
 };
