@@ -7,11 +7,11 @@ class Enemy : public Actor
 {
 public:
 	Enemy(int x, int y, int xVel, int yVel) :
-		Actor(x, y, xVel, yVel),
-		isAlive{ true }
+		Actor(x, y, xVel, yVel)
 	{};
-	bool isAlive;
-	void Draw(Graphics& gfx) override;
 
+	bool isAlive{ true };
+	
+	void Draw(Graphics& gfx) override;
 };
 

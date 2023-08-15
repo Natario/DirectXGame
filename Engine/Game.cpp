@@ -27,7 +27,7 @@ Game::Game( MainWindow& wnd )
 	wnd( wnd ),
 	gfx( wnd )
 {
-	// create enemies in random positions
+	// create enemies in random positions with random speeds
 	std::random_device seed;
 	std::mt19937 gen{ seed() };
 	int maxHalfsize = 50; // we assume enemies are no larger than 50
@@ -72,7 +72,7 @@ void Game::UpdateModel()
 			player.xVel -= player.accel;
 	}
 	
-	// decellerate if no key pressed
+	// decrease player speed if no key pressed
 	if (!wnd.kbd.KeyIsPressed(VK_UP) && player.yVel < 0)
 		player.yVel += player.accel;
 	if (!wnd.kbd.KeyIsPressed(VK_DOWN) && player.yVel > 0)
@@ -92,6 +92,15 @@ void Game::UpdateModel()
 	else
 		player.yVel = 0;
 
+	// mouse movement
+	if (wnd.mouse.IsInWindow() && (wnd.mouse.GetPosX() > 0 + player.halfsize) && (wnd.mouse.GetPosX() < Graphics::ScreenWidth - player.halfsize) &&
+								  (wnd.mouse.GetPosY() > 0 + player.halfsize) && (wnd.mouse.GetPosY() < Graphics::ScreenHeight - player.halfsize))
+	{
+		ShowCursor(false);
+		player.x = wnd.mouse.GetPosX();
+		player.y = wnd.mouse.GetPosY();
+	}
+
 	// update position of enemies and make them bounce when they hit the screen edge
 	for (auto& enemy : enemies) {
 		if (enemy.canMoveHorizontally())
@@ -110,11 +119,12 @@ void Game::UpdateModel()
 		if (isOverlapping(player, enemy) && enemy.isAlive)
 		{
 			isColliding = true;
-			if(wnd.kbd.KeyIsPressed(VK_SPACE))
+			// if player hits spacebar ou mouse button (shoots), kill enemy
+			if(wnd.kbd.KeyIsPressed(VK_SPACE) || wnd.mouse.LeftIsPressed())
 				enemy.isAlive = false;
 		}
 	}
-	// if colliding with an enemy, change color to red
+	// if player is colliding with (targeting) an enemy, change color to red
 	if(isColliding)
 	{
 		player.colorR = 255;
@@ -133,14 +143,15 @@ void Game::UpdateModel()
 void Game::ComposeFrame()
 {
 
-	// draw player
-	player.Draw(gfx);
-	
 	// draw enemies
 	for (auto& enemy : enemies) {
 		if(enemy.isAlive)
 			enemy.Draw(gfx);
 	}
+
+	// draw player (after enemies so it appears on top of them)
+	player.Draw(gfx);
+
 }
 
 bool Game::isOverlapping(Player player, Enemy enemy)

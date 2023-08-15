@@ -7,12 +7,12 @@ class Player : public Actor
 {
 public:
 	Player(int x, int y) :
-		Actor(x, y),
-		accel{ 1 },
-		maxVel{ 5 }
+		Actor(x, y)
 	{};
-	int accel;
-	int maxVel;
+
+	int accel{ 1 };
+	int maxVel{ 5 };
+	
 	void Draw(Graphics& gfx) override;
 };
 

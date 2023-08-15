@@ -9,20 +9,18 @@ public:
 		x{ x },
 		y{ y },
 		xVel{ xVel },
-		yVel{ yVel },
-		halfsize{ 10 },
-		colorR{ 255 },
-		colorG{ 255 },
-		colorB{ 255 }
+		yVel{ yVel }
 	{}; 
+
 	int x;
 	int y;
 	int xVel;
 	int yVel;
-	int halfsize;
-	int colorR;
-	int colorG;
-	int colorB; 
+	int halfsize{ 10 };
+	int colorR{ 255 };
+	int colorG{ 255 };
+	int colorB{ 255 };
+
 	bool canMoveHorizontally();
 	bool canMoveVertically();
 	virtual void Draw(Graphics& gfx);
