@@ -154,7 +154,7 @@ void Game::ComposeFrame()
 
 }
 
-bool Game::isOverlapping(Player player, Enemy enemy)
+bool Game::isOverlapping(const Player& player, const Enemy& enemy) const
 {
 	return (player.x <= enemy.x + enemy.halfsize) && (player.x >= enemy.x - enemy.halfsize) && (player.y <= enemy.y + enemy.halfsize) && (player.y >= enemy.y - enemy.halfsize);
 }

@@ -12,6 +12,6 @@ public:
 
 	bool isAlive{ true };
 	
-	void Draw(Graphics& gfx) override;
+	void Draw(Graphics& gfx) const override;
 };
 

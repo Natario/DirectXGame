@@ -38,7 +38,7 @@ private:
 	void UpdateModel();
 	/********************************/
 	/*  User Functions              */
-	bool isOverlapping(Player player, Enemy enemy);
+	bool isOverlapping(const Player& player, const Enemy& enemy) const;
 	/********************************/
 private:
 	MainWindow& wnd;

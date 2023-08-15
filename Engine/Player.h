@@ -13,6 +13,6 @@ public:
 	int accel{ 1 };
 	int maxVel{ 5 };
 	
-	void Draw(Graphics& gfx) override;
+	void Draw(Graphics& gfx) const override;
 };
 

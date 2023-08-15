@@ -16,13 +16,13 @@ public:
 	int y;
 	int xVel;
 	int yVel;
-	int halfsize{ 10 };
+	int halfsize{ 20 };
 	int colorR{ 255 };
 	int colorG{ 255 };
 	int colorB{ 255 };
 
 	bool canMoveHorizontally();
 	bool canMoveVertically();
-	virtual void Draw(Graphics& gfx);
+	virtual void Draw(Graphics& gfx) const;
 };
 

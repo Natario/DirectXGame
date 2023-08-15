@@ -16,6 +16,6 @@ bool Actor::canMoveVertically()
 		return false;
 }
 
-void Actor::Draw(Graphics& gfx)
+void Actor::Draw(Graphics& gfx) const
 {
 }
