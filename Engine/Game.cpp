@@ -20,12 +20,19 @@
  ******************************************************************************************/
 #include "MainWindow.h"
 #include "Game.h"
+#include <random>
 
 Game::Game( MainWindow& wnd )
 	:
 	wnd( wnd ),
 	gfx( wnd )
 {
+	std::random_device seed;
+	std::mt19937 gen{ seed() };
+	std::uniform_int_distribution<> distX{ crosshairHalfSize, Graphics::ScreenWidth - crosshairHalfSize - 1};
+	std::uniform_int_distribution<> distY{ crosshairHalfSize, Graphics::ScreenHeight - crosshairHalfSize - 1};
+	for(int i = 0 ; i < enemyAmount ; i++)
+		enemies.push_back(Enemy{ distX(gen),distY(gen) });
 }
 
 void Game::Go()
@@ -41,22 +48,22 @@ void Game::UpdateModel()
 	// increase speed in direction of key press
 	if (wnd.kbd.KeyIsPressed(VK_UP))
 	{
-		if(abs(yVel) < maxVel)
+		if(yVel - accel > -maxVel)
 			yVel -= accel;
 	}
 	if (wnd.kbd.KeyIsPressed(VK_RIGHT))
 	{
-		if (abs(xVel) < maxVel)
+		if (xVel + accel < maxVel)
 			xVel += accel;
 	}
 	if (wnd.kbd.KeyIsPressed(VK_DOWN))
 	{
-		if (abs(yVel) < maxVel)
+		if (yVel + accel < maxVel)
 			yVel += accel;
 	}
 	if (wnd.kbd.KeyIsPressed(VK_LEFT))
 	{
-		if (abs(xVel) < maxVel)
+		if (xVel - accel > -maxVel)
 			xVel -= accel;
 	}
 	
@@ -70,18 +77,27 @@ void Game::UpdateModel()
 	if (!wnd.kbd.KeyIsPressed(VK_LEFT) && xVel < 0)
 		xVel += accel;
 	
-	// update position depending on speed if new position is not outside screen (plus a margin for all the recticle pixels)
-	if ((xPos + xVel > 0 + crosshairSize) && (xPos + xVel < Graphics::ScreenWidth - crosshairSize))
+	// update position depending on speed only if new position is not outside screen, otherwise stop the crosshair
+	if (canMoveHorizontally(xPos, xVel))
 		xPos += xVel;
 	else
 		xVel = 0;
-	if ((yPos + yVel > 0 + crosshairSize) && (yPos + yVel < Graphics::ScreenHeight - crosshairSize))
+	if (canMoveVertically(yPos, yVel))
 		yPos += yVel;
 	else
 		yVel = 0;
 	
 	// detect colision with enemy
-	if((xPos <= xEnemy + crosshairSize) && (xPos >= xEnemy - crosshairSize) && (yPos <= yEnemy + crosshairSize) && (yPos >= yEnemy - crosshairSize))
+	bool isColliding = false;
+	for (auto& enemy : enemies) {
+		if (isOverlapping(xPos, yPos, enemy.x, enemy.y) && enemy.alive)
+		{
+			isColliding = true;
+			if(wnd.kbd.KeyIsPressed(VK_SPACE))
+				enemy.alive = false;
+		}
+	}
+	if(isColliding)
 	{
 		colorR = 255;
 		colorG = 0;
@@ -103,63 +119,81 @@ void Game::ComposeFrame()
 
 	if (!isAlternativeShape)
 	{
-		drawCrosshair(xPos, yPos, colorR, colorG, colorB);
+		DrawCrosshair(xPos, yPos, colorR, colorG, colorB);
 	}
 	else
 	{
-		drawRectangle(xPos, yPos, colorR, colorG, colorB);
+		DrawRectangle(xPos, yPos, colorR, colorG, colorB);
 	}
 
 	// enemy rectangle
-	drawRectangle(xEnemy, yEnemy, 255, 255, 255);
+	for (auto& enemy : enemies) {
+		if(enemy.alive)
+			DrawRectangle(enemy.x, enemy.y, 255, 255, 255);
+	}
 }
 
-void Game::drawCrosshair(int xPos, int yPos, int colorR, int colorG, int colorB)
+void Game::DrawCrosshair(int xPos, int yPos, int colorR, int colorG, int colorB)
 {
 	// horizontal line
-	gfx.PutPixel(xPos - crosshairSize + 0, yPos, colorR, colorG, colorB);
-	gfx.PutPixel(xPos - crosshairSize + 1, yPos, colorR, colorG, colorB);
-	gfx.PutPixel(xPos - crosshairSize + 2, yPos, colorR, colorG, colorB);
-	gfx.PutPixel(xPos + crosshairSize - 2, yPos, colorR, colorG, colorB);
-	gfx.PutPixel(xPos + crosshairSize - 1, yPos, colorR, colorG, colorB);
-	gfx.PutPixel(xPos + crosshairSize - 0, yPos, colorR, colorG, colorB);
+	for (int i = 0; i <= crosshairHalfSize / 2; i++)
+	{
+		gfx.PutPixel(xPos - crosshairHalfSize + i, yPos, colorR, colorG, colorB);
+		gfx.PutPixel(xPos + crosshairHalfSize - i, yPos, colorR, colorG, colorB);
+	}
 	// vertical line
-	gfx.PutPixel(xPos, yPos - crosshairSize + 0, colorR, colorG, colorB);
-	gfx.PutPixel(xPos, yPos - crosshairSize + 1, colorR, colorG, colorB);
-	gfx.PutPixel(xPos, yPos - crosshairSize + 2, colorR, colorG, colorB);
-	gfx.PutPixel(xPos, yPos + crosshairSize - 2, colorR, colorG, colorB);
-	gfx.PutPixel(xPos, yPos + crosshairSize - 1, colorR, colorG, colorB);
-	gfx.PutPixel(xPos, yPos + crosshairSize - 0, colorR, colorG, colorB);
+	for (int i = 0; i <= crosshairHalfSize / 2; i++)
+	{
+		gfx.PutPixel(xPos, yPos - crosshairHalfSize + i, colorR, colorG, colorB);
+		gfx.PutPixel(xPos, yPos + crosshairHalfSize - i, colorR, colorG, colorB);
+	}
 }
 
-void Game::drawRectangle(int xPos, int yPos, int colorR, int colorG, int colorB)
+void Game::DrawRectangle(int xPos, int yPos, int colorR, int colorG, int colorB)
 {
 	// top line
-	gfx.PutPixel(xPos - crosshairSize + 0, yPos - crosshairSize, colorR, colorG, colorB);
-	gfx.PutPixel(xPos - crosshairSize + 1, yPos - crosshairSize, colorR, colorG, colorB);
-	gfx.PutPixel(xPos - crosshairSize + 2, yPos - crosshairSize, colorR, colorG, colorB);
-	gfx.PutPixel(xPos + crosshairSize - 2, yPos - crosshairSize, colorR, colorG, colorB);
-	gfx.PutPixel(xPos + crosshairSize - 1, yPos - crosshairSize, colorR, colorG, colorB);
-	gfx.PutPixel(xPos + crosshairSize - 0, yPos - crosshairSize, colorR, colorG, colorB);
+	for (int i = 0; i <= crosshairHalfSize / 2; i++)
+	{
+		gfx.PutPixel(xPos - crosshairHalfSize + i, yPos - crosshairHalfSize, colorR, colorG, colorB);
+		gfx.PutPixel(xPos + crosshairHalfSize - i, yPos - crosshairHalfSize, colorR, colorG, colorB);
+	}
 	// bottom line
-	gfx.PutPixel(xPos - crosshairSize + 0, yPos + crosshairSize, colorR, colorG, colorB);
-	gfx.PutPixel(xPos - crosshairSize + 1, yPos + crosshairSize, colorR, colorG, colorB);
-	gfx.PutPixel(xPos - crosshairSize + 2, yPos + crosshairSize, colorR, colorG, colorB);
-	gfx.PutPixel(xPos + crosshairSize - 2, yPos + crosshairSize, colorR, colorG, colorB);
-	gfx.PutPixel(xPos + crosshairSize - 1, yPos + crosshairSize, colorR, colorG, colorB);
-	gfx.PutPixel(xPos + crosshairSize - 0, yPos + crosshairSize, colorR, colorG, colorB);
+	for (int i = 0; i <= crosshairHalfSize / 2; i++)
+	{
+		gfx.PutPixel(xPos - crosshairHalfSize + i, yPos + crosshairHalfSize, colorR, colorG, colorB);
+		gfx.PutPixel(xPos + crosshairHalfSize - i, yPos + crosshairHalfSize, colorR, colorG, colorB);
+	}
 	// left line
-	gfx.PutPixel(xPos - crosshairSize, yPos - crosshairSize + 0, colorR, colorG, colorB);
-	gfx.PutPixel(xPos - crosshairSize, yPos - crosshairSize + 1, colorR, colorG, colorB);
-	gfx.PutPixel(xPos - crosshairSize, yPos - crosshairSize + 2, colorR, colorG, colorB);
-	gfx.PutPixel(xPos - crosshairSize, yPos + crosshairSize - 2, colorR, colorG, colorB);
-	gfx.PutPixel(xPos - crosshairSize, yPos + crosshairSize - 1, colorR, colorG, colorB);
-	gfx.PutPixel(xPos - crosshairSize, yPos + crosshairSize - 0, colorR, colorG, colorB);
-	// right line		crosshairSize
-	gfx.PutPixel(xPos + crosshairSize, yPos - crosshairSize + 0, colorR, colorG, colorB);
-	gfx.PutPixel(xPos + crosshairSize, yPos - crosshairSize + 1, colorR, colorG, colorB);
-	gfx.PutPixel(xPos + crosshairSize, yPos - crosshairSize + 2, colorR, colorG, colorB);
-	gfx.PutPixel(xPos + crosshairSize, yPos + crosshairSize - 2, colorR, colorG, colorB);
-	gfx.PutPixel(xPos + crosshairSize, yPos + crosshairSize - 1, colorR, colorG, colorB);
-	gfx.PutPixel(xPos + crosshairSize, yPos + crosshairSize - 0, colorR, colorG, colorB);
+	for (int i = 0; i <= crosshairHalfSize / 2; i++)
+	{
+		gfx.PutPixel(xPos - crosshairHalfSize, yPos - crosshairHalfSize + i, colorR, colorG, colorB);
+		gfx.PutPixel(xPos - crosshairHalfSize, yPos + crosshairHalfSize - i, colorR, colorG, colorB);
+	}
+	// right line
+	for (int i = 0; i <= crosshairHalfSize / 2; i++)
+	{
+		gfx.PutPixel(xPos + crosshairHalfSize, yPos - crosshairHalfSize + i, colorR, colorG, colorB);
+		gfx.PutPixel(xPos + crosshairHalfSize, yPos + crosshairHalfSize - i, colorR, colorG, colorB);
+	}
+}
+
+bool Game::isOverlapping(int xPos, int yPos, int xEnemy, int yEnemy)
+{
+	return (xPos <= xEnemy + crosshairHalfSize) && (xPos >= xEnemy - crosshairHalfSize) && (yPos <= yEnemy + crosshairHalfSize) && (yPos >= yEnemy - crosshairHalfSize);
+}
+
+bool Game::canMoveHorizontally(int xPos, int xVel)
+{
+	if ((xPos + xVel > 0 + crosshairHalfSize) && (xPos + xVel < Graphics::ScreenWidth - crosshairHalfSize))
+		return true;
+	else
+		return false;
+}
+
+bool Game::canMoveVertically(int yPos, int yVel)
+{
+	if ((yPos + yVel > 0 + crosshairHalfSize) && (yPos + yVel < Graphics::ScreenHeight - crosshairHalfSize))
+		return true;
+	else
+		return false;
 }
