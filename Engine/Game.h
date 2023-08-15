@@ -23,6 +23,7 @@
 #include "Keyboard.h"
 #include "Mouse.h"
 #include "Graphics.h"
+#include "Player.h"
 #include "Enemy.h"
 
 class Game
@@ -37,29 +38,15 @@ private:
 	void UpdateModel();
 	/********************************/
 	/*  User Functions              */
-	void DrawCrosshair(int xPos, int yPos, int colorR, int colorG, int colorB);
-	void DrawRectangle(int xPos, int yPos, int colorR, int colorG, int colorB);
-	bool isOverlapping(int xPos, int yPos, int xEnemy, int yEnemy);
-	bool canMoveHorizontally(int xPos, int xVel);
-	bool canMoveVertically(int yPos, int yVel);
+	bool isOverlapping(Player player, Enemy enemy);
 	/********************************/
 private:
 	MainWindow& wnd;
 	Graphics gfx;
 	/********************************/
 	/*  User Variables              */
-	int xPos{ Graphics::ScreenWidth / 2 };
-	int yPos{ Graphics::ScreenHeight / 2 };
-	int xVel{ 0 };
-	int yVel{ 0 };
-	int crosshairHalfSize{ 10 };
-	int colorR{ 255 };
-	int colorG{ 255 };
-	int colorB{ 255 };
-	bool isAlternativeShape{ false };
-	int accel{ 1 };
-	int maxVel{ 5 };
-	std::vector<Enemy> enemies;
+	Player player{ Graphics::ScreenWidth / 2, Graphics::ScreenHeight / 2 };
 	int enemyAmount{ 5 };
+	std::vector<Enemy> enemies{};
 	/********************************/
 };

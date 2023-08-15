@@ -27,12 +27,17 @@ Game::Game( MainWindow& wnd )
 	wnd( wnd ),
 	gfx( wnd )
 {
+	// create enemies in random positions
 	std::random_device seed;
 	std::mt19937 gen{ seed() };
-	std::uniform_int_distribution<> distX{ crosshairHalfSize, Graphics::ScreenWidth - crosshairHalfSize - 1};
-	std::uniform_int_distribution<> distY{ crosshairHalfSize, Graphics::ScreenHeight - crosshairHalfSize - 1};
-	for(int i = 0 ; i < enemyAmount ; i++)
-		enemies.push_back(Enemy{ distX(gen),distY(gen) });
+	int maxHalfsize = 50; // we assume enemies are no larger than 50
+	for (int i = 0; i < enemyAmount; i++)
+	{
+		std::uniform_int_distribution<> distX{ maxHalfsize, Graphics::ScreenWidth - maxHalfsize - 1 };
+		std::uniform_int_distribution<> distY{ maxHalfsize, Graphics::ScreenHeight - maxHalfsize - 1 };
+		std::uniform_int_distribution<> distSpeed{ 1, 3 };
+		enemies.push_back(Enemy{ distX(gen), distY(gen), distSpeed(gen), distSpeed(gen) });
+	}
 }
 
 void Game::Go()
@@ -45,155 +50,101 @@ void Game::Go()
 
 void Game::UpdateModel()
 {
-	// increase speed in direction of key press
+	// increase player speed in the direction of key press
 	if (wnd.kbd.KeyIsPressed(VK_UP))
 	{
-		if(yVel - accel > -maxVel)
-			yVel -= accel;
+		if(player.yVel - player.accel > -player.maxVel)
+			player.yVel -= player.accel;
 	}
 	if (wnd.kbd.KeyIsPressed(VK_RIGHT))
 	{
-		if (xVel + accel < maxVel)
-			xVel += accel;
+		if (player.xVel + player.accel < player.maxVel)
+			player.xVel += player.accel;
 	}
 	if (wnd.kbd.KeyIsPressed(VK_DOWN))
 	{
-		if (yVel + accel < maxVel)
-			yVel += accel;
+		if (player.yVel + player.accel < player.maxVel)
+			player.yVel += player.accel;
 	}
 	if (wnd.kbd.KeyIsPressed(VK_LEFT))
 	{
-		if (xVel - accel > -maxVel)
-			xVel -= accel;
+		if (player.xVel - player.accel > -player.maxVel)
+			player.xVel -= player.accel;
 	}
 	
 	// decellerate if no key pressed
-	if (!wnd.kbd.KeyIsPressed(VK_UP) && yVel < 0)
-		yVel += accel;
-	if (!wnd.kbd.KeyIsPressed(VK_DOWN) && yVel > 0)
-		yVel -= accel;
-	if (!wnd.kbd.KeyIsPressed(VK_RIGHT) && xVel > 0)
-		xVel -= accel;
-	if (!wnd.kbd.KeyIsPressed(VK_LEFT) && xVel < 0)
-		xVel += accel;
+	if (!wnd.kbd.KeyIsPressed(VK_UP) && player.yVel < 0)
+		player.yVel += player.accel;
+	if (!wnd.kbd.KeyIsPressed(VK_DOWN) && player.yVel > 0)
+		player.yVel -= player.accel;
+	if (!wnd.kbd.KeyIsPressed(VK_RIGHT) && player.xVel > 0)
+		player.xVel -= player.accel;
+	if (!wnd.kbd.KeyIsPressed(VK_LEFT) && player.xVel < 0)
+		player.xVel += player.accel;
 	
-	// update position depending on speed only if new position is not outside screen, otherwise stop the crosshair
-	if (canMoveHorizontally(xPos, xVel))
-		xPos += xVel;
+	// update position of player depending on speed only if new position is not outside screen, otherwise stop the movement
+	if (player.canMoveHorizontally())
+		player.x += player.xVel;
 	else
-		xVel = 0;
-	if (canMoveVertically(yPos, yVel))
-		yPos += yVel;
+		player.xVel = 0;
+	if (player.canMoveVertically())
+		player.y += player.yVel;
 	else
-		yVel = 0;
+		player.yVel = 0;
+
+	// update position of enemies and make them bounce when they hit the screen edge
+	for (auto& enemy : enemies) {
+		if (enemy.canMoveHorizontally())
+			enemy.x += enemy.xVel;
+		else
+			enemy.xVel = -enemy.xVel;
+		if (enemy.canMoveVertically())
+			enemy.y += enemy.yVel;
+		else
+			enemy.yVel = -enemy.yVel;
+	}
 	
-	// detect colision with enemy
+	// detect colision of player with enemy
 	bool isColliding = false;
 	for (auto& enemy : enemies) {
-		if (isOverlapping(xPos, yPos, enemy.x, enemy.y) && enemy.alive)
+		if (isOverlapping(player, enemy) && enemy.isAlive)
 		{
 			isColliding = true;
 			if(wnd.kbd.KeyIsPressed(VK_SPACE))
-				enemy.alive = false;
+				enemy.isAlive = false;
 		}
 	}
+	// if colliding with an enemy, change color to red
 	if(isColliding)
 	{
-		colorR = 255;
-		colorG = 0;
-		colorB = 0;
+		player.colorR = 255;
+		player.colorG = 0;
+		player.colorB = 0;
 	}
 	else
 	{
-		colorR = 255;
-		colorG = 255;
-		colorB = 255;
+		player.colorR = 255;
+		player.colorG = 255;
+		player.colorB = 255;
 	}
 
-	// change shape of recticle
-	isAlternativeShape = wnd.kbd.KeyIsPressed(VK_SHIFT);
 }
 
 void Game::ComposeFrame()
 {
 
-	if (!isAlternativeShape)
-	{
-		DrawCrosshair(xPos, yPos, colorR, colorG, colorB);
-	}
-	else
-	{
-		DrawRectangle(xPos, yPos, colorR, colorG, colorB);
-	}
-
-	// enemy rectangle
+	// draw player
+	player.Draw(gfx);
+	
+	// draw enemies
 	for (auto& enemy : enemies) {
-		if(enemy.alive)
-			DrawRectangle(enemy.x, enemy.y, 255, 255, 255);
+		if(enemy.isAlive)
+			enemy.Draw(gfx);
 	}
 }
 
-void Game::DrawCrosshair(int xPos, int yPos, int colorR, int colorG, int colorB)
+bool Game::isOverlapping(Player player, Enemy enemy)
 {
-	// horizontal line
-	for (int i = 0; i <= crosshairHalfSize / 2; i++)
-	{
-		gfx.PutPixel(xPos - crosshairHalfSize + i, yPos, colorR, colorG, colorB);
-		gfx.PutPixel(xPos + crosshairHalfSize - i, yPos, colorR, colorG, colorB);
-	}
-	// vertical line
-	for (int i = 0; i <= crosshairHalfSize / 2; i++)
-	{
-		gfx.PutPixel(xPos, yPos - crosshairHalfSize + i, colorR, colorG, colorB);
-		gfx.PutPixel(xPos, yPos + crosshairHalfSize - i, colorR, colorG, colorB);
-	}
+	return (player.x <= enemy.x + enemy.halfsize) && (player.x >= enemy.x - enemy.halfsize) && (player.y <= enemy.y + enemy.halfsize) && (player.y >= enemy.y - enemy.halfsize);
 }
 
-void Game::DrawRectangle(int xPos, int yPos, int colorR, int colorG, int colorB)
-{
-	// top line
-	for (int i = 0; i <= crosshairHalfSize / 2; i++)
-	{
-		gfx.PutPixel(xPos - crosshairHalfSize + i, yPos - crosshairHalfSize, colorR, colorG, colorB);
-		gfx.PutPixel(xPos + crosshairHalfSize - i, yPos - crosshairHalfSize, colorR, colorG, colorB);
-	}
-	// bottom line
-	for (int i = 0; i <= crosshairHalfSize / 2; i++)
-	{
-		gfx.PutPixel(xPos - crosshairHalfSize + i, yPos + crosshairHalfSize, colorR, colorG, colorB);
-		gfx.PutPixel(xPos + crosshairHalfSize - i, yPos + crosshairHalfSize, colorR, colorG, colorB);
-	}
-	// left line
-	for (int i = 0; i <= crosshairHalfSize / 2; i++)
-	{
-		gfx.PutPixel(xPos - crosshairHalfSize, yPos - crosshairHalfSize + i, colorR, colorG, colorB);
-		gfx.PutPixel(xPos - crosshairHalfSize, yPos + crosshairHalfSize - i, colorR, colorG, colorB);
-	}
-	// right line
-	for (int i = 0; i <= crosshairHalfSize / 2; i++)
-	{
-		gfx.PutPixel(xPos + crosshairHalfSize, yPos - crosshairHalfSize + i, colorR, colorG, colorB);
-		gfx.PutPixel(xPos + crosshairHalfSize, yPos + crosshairHalfSize - i, colorR, colorG, colorB);
-	}
-}
-
-bool Game::isOverlapping(int xPos, int yPos, int xEnemy, int yEnemy)
-{
-	return (xPos <= xEnemy + crosshairHalfSize) && (xPos >= xEnemy - crosshairHalfSize) && (yPos <= yEnemy + crosshairHalfSize) && (yPos >= yEnemy - crosshairHalfSize);
-}
-
-bool Game::canMoveHorizontally(int xPos, int xVel)
-{
-	if ((xPos + xVel > 0 + crosshairHalfSize) && (xPos + xVel < Graphics::ScreenWidth - crosshairHalfSize))
-		return true;
-	else
-		return false;
-}
-
-bool Game::canMoveVertically(int yPos, int yVel)
-{
-	if ((yPos + yVel > 0 + crosshairHalfSize) && (yPos + yVel < Graphics::ScreenHeight - crosshairHalfSize))
-		return true;
-	else
-		return false;
-}

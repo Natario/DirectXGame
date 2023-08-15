@@ -1,10 +1,17 @@
 #pragma once
-class Enemy
+
+#include "Graphics.h"
+#include "Actor.h"
+
+class Enemy : public Actor
 {
-	public:
-		Enemy(int x, int y) : x{ x }, y{ y }, alive{ true } {};
-		int x;
-		int y;
-		bool alive;
+public:
+	Enemy(int x, int y, int xVel, int yVel) :
+		Actor(x, y, xVel, yVel),
+		isAlive{ true }
+	{};
+	bool isAlive;
+	void Draw(Graphics& gfx) override;
+
 };
 
