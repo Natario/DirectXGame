@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Graphics.h"
 #include "Actor.h"
 
 class Enemy : public Actor
@@ -13,6 +12,6 @@ public:
 	bool isAlive{ true };
 	
 	void UpdatePosition(MainWindow& wnd) override;
-	void Draw(Graphics& gfx) const override;
+	void Draw(class Graphics& gfx) const override;
 };
 

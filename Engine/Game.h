@@ -25,6 +25,7 @@
 #include "Graphics.h"
 #include "Player.h"
 #include "Enemy.h"
+#include "Food.h"
 #include "TextDrawer.h"
 
 class Game
@@ -39,8 +40,9 @@ private:
 	void UpdateModel();
 	/********************************/
 	/*  User Functions              */
-	bool isOverlapping(const Player& player, const Enemy& enemy) const;
+	bool isOverlapping(const Player& player, const Actor& enemy) const;
 	void createRandomEnemies(int level);
+	void createRandomFood(int level);
 	/********************************/
 private:
 	MainWindow& wnd;
@@ -49,7 +51,8 @@ private:
 	/*  User Variables              */
 	Player player{ Graphics::ScreenWidth / 2, Graphics::ScreenHeight / 2 };
 	std::vector<Enemy> enemies{};
-	int nextLevel{ 1 };
-	TextDrawer textDrawer{};
+	int currentLevel{ 0 };
+	Food food{ Graphics::ScreenWidth / 2, Graphics::ScreenHeight / 2 };
+	bool isModeRunaway{ false };
 	/********************************/
 };

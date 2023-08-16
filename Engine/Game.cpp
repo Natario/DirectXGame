@@ -28,7 +28,9 @@ Game::Game( MainWindow& wnd )
 	wnd( wnd ),
 	gfx( wnd )
 {
-	createRandomEnemies(nextLevel++);
+	createRandomEnemies(++currentLevel);
+	
+	createRandomFood(currentLevel);
 }
 
 void Game::Go()
@@ -42,6 +44,8 @@ void Game::Go()
 void Game::UpdateModel()
 {
 	
+	// POSITION UPDATE
+	// 
 	// update position of player depending, possibly, on input
 	player.UpdatePosition(wnd);
 
@@ -50,67 +54,56 @@ void Game::UpdateModel()
 		enemy.UpdatePosition(wnd);
 	}
 	
+
+
+	// COLLISION DETECTION
+	// 
 	// detect if the middle of player (crosshair) is on top of any enemy
-	bool isColliding = false;
 	for (auto& enemy : enemies) {
 		if (isOverlapping(player, enemy) && enemy.isAlive)
 		{
-			isColliding = true;
-			// if player hits spacebar or mouse button (shoots) while on top of an enemy, kill enemy
-			if(wnd.kbd.KeyIsPressed(VK_SPACE) || wnd.mouse.LeftIsPressed())
+			// in mode runaway, if player hits an enemy, he dies, so restart level
+			// in normal mode, if player hits spacebar or mouse button (shoots) while on top of an enemy, kill enemy
+			if (isModeRunaway)
+			{
+				createRandomFood(currentLevel);
+				createRandomEnemies(currentLevel);
+				break;
+			}
+			else if(wnd.kbd.KeyIsPressed(VK_SPACE) || wnd.mouse.LeftIsPressed())
 				enemy.isAlive = false;
 		}
 	}
-	// if player is colliding with (targeting) an enemy, change color to red
-	if(isColliding)
+
+
+
+	// LEVEL UP CONDITIONS
+	// 
+	// in mode runaway, increase level when player gets food,
+	// in normal mode, increase level when there are no enemies alive
+	if (isModeRunaway)
 	{
-		player.colorR = 255;
-		player.colorG = 0;
-		player.colorB = 0;
+		if (isOverlapping(player, food))
+		{
+			createRandomFood(++currentLevel);
+			createRandomEnemies(currentLevel);
+		}
+
 	}
 	else
 	{
-		player.colorR = 255;
-		player.colorG = 255;
-		player.colorB = 255;
+		int enemiesAlive = std::count_if(
+			enemies.cbegin(),
+			enemies.cend(),
+			[](const auto& enemy) {
+				return enemy.isAlive;
+			}
+		);
+		if (enemiesAlive == 0)
+			createRandomEnemies(++currentLevel);
 	}
 
-	// count number of enemies alive and if there are none go to next level 
-	int enemiesAlive = std::count_if(
-		enemies.cbegin(),
-		enemies.cend(),
-		[](const auto& enemy) {
-			return enemy.isAlive;
-		}
-	);
-	if (enemiesAlive == 0)
-		createRandomEnemies(nextLevel++);
 
-	textDrawer.drawLevelText(gfx, 20, 20);
-	if (nextLevel == 2)
-		textDrawer.drawOneText(gfx, 100, 20);
-	if (nextLevel == 3)
-		textDrawer.drawTwoText(gfx, 100, 20);
-	if (nextLevel == 4)
-		textDrawer.drawThreeText(gfx, 100, 20);
-	if (nextLevel == 5)
-		textDrawer.drawFourText(gfx, 100, 20);
-	if (nextLevel == 6)
-		textDrawer.drawFiveText(gfx, 100, 20);
-	if (nextLevel == 7)
-		textDrawer.drawSixText(gfx, 100, 20);
-	if (nextLevel == 8)
-		textDrawer.drawSevenText(gfx, 100, 20);
-	if (nextLevel == 9)
-		textDrawer.drawEightText(gfx, 100, 20);
-	if (nextLevel == 10)
-		textDrawer.drawNineText(gfx, 100, 20);
-	if (nextLevel == 11)
-	{
-		textDrawer.drawOneText(gfx, 100, 20);
-		textDrawer.drawZeroText(gfx, 120, 20);
-	}
-	//TODO: need to find a more reusable way to draw all possible levels
 
 }
 
@@ -123,12 +116,19 @@ void Game::ComposeFrame()
 			enemy.Draw(gfx);
 	}
 
+	// draw food
+	if(isModeRunaway)
+		food.Draw(gfx);
+
 	// draw player (after enemies so it appears on top of them)
 	player.Draw(gfx);
+	
+	// draw level information
+	TextDrawer::drawLevel(gfx, currentLevel, 20, 20);
 
 }
 
-bool Game::isOverlapping(const Player& player, const Enemy& enemy) const
+bool Game::isOverlapping(const Player& player, const Actor& enemy) const
 {
 	return (player.x <= enemy.x + enemy.halfsize) && (player.x >= enemy.x - enemy.halfsize) && (player.y <= enemy.y + enemy.halfsize) && (player.y >= enemy.y - enemy.halfsize);
 }
@@ -147,6 +147,18 @@ void Game::createRandomEnemies(int level)
 		std::uniform_int_distribution<> distSpeed{ 1, std::max(1, std::min(level, 4)) }; // don't increase speed too much because it causes motion sickness (max(min()) is like clamp() - https://stackoverflow.com/a/9324086/3174659)
 		enemies.push_back(Enemy{ distX(gen), distY(gen), distSpeed(gen), distSpeed(gen) });
 	}
+}
+
+void Game::createRandomFood(int level)
+{
+	// create food in ranndom position
+	std::random_device seed;
+	std::mt19937 gen{ seed() };
+	int maxHalfsize = 50; // we assume food is no larger than 50
+	std::uniform_int_distribution<> distX{ maxHalfsize, Graphics::ScreenWidth - maxHalfsize - 1 };
+	std::uniform_int_distribution<> distY{ maxHalfsize, Graphics::ScreenHeight - maxHalfsize - 1 };
+	food.x = distX(gen);
+	food.y = distY(gen);
 }
 
 
