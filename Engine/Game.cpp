@@ -146,7 +146,10 @@ void Game::ComposeFrame()
 			food.Draw(gfx);
 
 		// draw player (after enemies so it appears on top of them)
-		player.Draw(gfx);
+		if (isGameModeRunaway)
+			player.DrawAlternative(gfx);
+		else
+			player.Draw(gfx);
 
 		// draw level information
 		TextDrawer::drawLevel(gfx, currentLevel, 20, 20);

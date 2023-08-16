@@ -1,6 +1,7 @@
 #include "Player.h"
 #include "MainWindow.h"
 #include "Graphics.h"
+#include "TextDrawer.h"
 
 
 void Player::UpdatePosition(MainWindow& wnd)
@@ -60,7 +61,8 @@ void Player::UpdatePosition(MainWindow& wnd)
 
 void Player::Draw(Graphics& gfx) const
 {
-	// draw crosshair
+	// Draw crosshair
+
 	// horizontal line
 	for (int i = 0; i <= halfsize / 2 + 5; i++)
 	{
@@ -73,4 +75,9 @@ void Player::Draw(Graphics& gfx) const
 		gfx.PutPixel(x, y - halfsize + i, colorR, colorG, colorB);
 		gfx.PutPixel(x, y + halfsize - i, colorR, colorG, colorB);
 	}
+}
+
+void Player::DrawAlternative(Graphics& gfx) const
+{
+	TextDrawer::drawImage(gfx, L"..\\img\\quagmire.png", x - halfsize, y - halfsize);
 }
