@@ -77,7 +77,36 @@ void Player::Draw(Graphics& gfx) const
 	}
 }
 
-void Player::DrawAlternative(Graphics& gfx) const
+void Player::DrawAlternative(Graphics& gfx, bool gracePeriod) const
 {
 	TextDrawer::drawImage(gfx, L"..\\img\\quagmire.png", x - halfsize, y - halfsize);
+
+	// in grace period, draw a rectangle around player so he knows it's in grace
+	if (gracePeriod)
+	{
+		// top line
+		for (int i = 0; i <= halfsize / 2; i++)
+		{
+			gfx.PutPixel(x - halfsize + i, y - halfsize, 0, 255, 0);
+			gfx.PutPixel(x + halfsize - i, y - halfsize, 0, 255, 0);
+		}
+		// bottom line
+		for (int i = 0; i <= halfsize / 2; i++)
+		{
+			gfx.PutPixel(x - halfsize + i, y + halfsize, 0, 255, 0);
+			gfx.PutPixel(x + halfsize - i, y + halfsize, 0, 255, 0);
+		}
+		// left line
+		for (int i = 0; i <= halfsize / 2; i++)
+		{
+			gfx.PutPixel(x - halfsize, y - halfsize + i, 0, 255, 0);
+			gfx.PutPixel(x - halfsize, y + halfsize - i, 0, 255, 0);
+		}
+		// right line
+		for (int i = 0; i <= halfsize / 2; i++)
+		{
+			gfx.PutPixel(x + halfsize, y - halfsize + i, 0, 255, 0);
+			gfx.PutPixel(x + halfsize, y + halfsize - i, 0, 255, 0);
+		}
+	}
 }

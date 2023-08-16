@@ -14,6 +14,6 @@ public:
 	
 	void UpdatePosition(class MainWindow& wnd) override;
 	void Draw(class Graphics& gfx) const override;
-	void DrawAlternative(class Graphics& gfx) const;
+	void DrawAlternative(class Graphics& gfx, bool gracePeriod) const;
 };
 

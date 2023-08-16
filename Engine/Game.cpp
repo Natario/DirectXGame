@@ -71,8 +71,10 @@ void Game::UpdateModel()
 					isGameOver = true;
 					break;
 				}
-				else if (wnd.kbd.KeyIsPressed(VK_SPACE) || wnd.mouse.LeftIsPressed())
+				else if (ammo > 0 && reloadingTimer == 0 && (wnd.kbd.KeyIsPressed(VK_SPACE) || wnd.mouse.LeftIsPressed()))
+				{
 					enemy.isAlive = false;
+				}
 			}
 		}
 	}
@@ -106,6 +108,7 @@ void Game::UpdateModel()
 		{
 			createRandomEnemies(++currentLevel);
 			gracePeriodTimer = gracePeriodTime;
+			ammo = currentLevel + 5;
 		}
 	}
 
@@ -123,6 +126,18 @@ void Game::UpdateModel()
 		player.colorR = 255;
 		player.colorG = 255;
 		player.colorB = 255;
+	}
+
+
+	// if the user is continually shooting, decrease ammo every x frames (reloadingTime) so that he doesnt just leave the button pressed
+	if (ammo > 0 && reloadingTimer == 0 && (wnd.kbd.KeyIsPressed(VK_SPACE) || wnd.mouse.LeftIsPressed()))
+	{
+		ammo--;
+		reloadingTimer = reloadingTime;
+	}
+	if (reloadingTimer > 0)
+	{
+		reloadingTimer--;
 	}
 
 
@@ -147,12 +162,18 @@ void Game::ComposeFrame()
 
 		// draw player (after enemies so it appears on top of them)
 		if (isGameModeRunaway)
-			player.DrawAlternative(gfx);
+			player.DrawAlternative(gfx, gracePeriodTimer > 0);
 		else
 			player.Draw(gfx);
 
-		// draw level information
-		TextDrawer::drawLevel(gfx, currentLevel, 20, 20);
+		// draw level and ammo information
+		TextDrawer::drawImage(gfx, L"..\\img\\level.png", 20, 20);
+		TextDrawer::drawNumber(gfx, currentLevel, 100, 20);
+		if (!isGameModeRunaway)
+		{
+			TextDrawer::drawImage(gfx, L"..\\img\\ammo.png", 400, 20);
+			TextDrawer::drawNumber(gfx, ammo, 480, 20);
+		}
 	}
 	else
 	{
@@ -172,7 +193,10 @@ void Game::createRandomEnemies(int level)
 	std::random_device seed;
 	std::mt19937 gen{ seed() };
 	int maxHalfsize = 50; // we assume enemies are no larger than 50
-	int maxEnemies = 25; // limit the amount of enemies on screen so there is space to move around
+	int maxEnemies{ level };
+	if(isGameModeRunaway)
+		maxEnemies = 25; // limit the amount of enemies on screen so there is space to actually run away
+	else
 	enemies.clear();
 	for (int i = 0; i < std::min(level, maxEnemies) ; i++)
 	{

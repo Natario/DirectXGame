@@ -5,23 +5,19 @@
 #pragma comment (lib,"Gdiplus.lib") // Apparently this works to include a library instead of adding to the libpath in the IDE https://learn.microsoft.com/en-us/windows/win32/gdiplus/-gdiplus-drawing-a-line-use
 
 
-void TextDrawer::drawLevel(Graphics& gfx, int level, int x, int y)
+void TextDrawer::drawNumber(Graphics& gfx, int number, int x, int y)
 {
 	// convert integer to array of digits - https://stackoverflow.com/a/15987731/3174659
 	std::vector<int> digits;
-	while (level)
+	do
 	{
-		digits.push_back(level % 10);
-		level /= 10;
-	}
+		digits.push_back(number % 10);
+		number /= 10;
+	} while (number); // do-while so that if number is zero, we also print it
 	std::reverse(digits.begin(), digits.end());
 
-	
-	// now draw both the text "Level" and the level digits
-	wchar_t* fileName = L"..\\img\\level.png";
 	int nextImageX = x;
-	drawImage(gfx, fileName, nextImageX, y);
-	nextImageX += 80;
+	wchar_t* fileName = L"";
 	for (auto digit : digits)
 	{
 		if (digit == 1)
@@ -46,12 +42,10 @@ void TextDrawer::drawLevel(Graphics& gfx, int level, int x, int y)
 			fileName = L"..\\img\\zero.png";
 
 		drawImage(gfx, fileName, nextImageX, y);
-		
+
 		nextImageX += 20;
 	}
-
 }
-
 
 void TextDrawer::drawImage(Graphics& gfx, wchar_t* fileName, int x, int y)
 {
