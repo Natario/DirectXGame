@@ -75,7 +75,7 @@ void TextDrawer::drawImage(Graphics& gfx, wchar_t* fileName, int x, int y)
 			}
 		}
 	}
-	// we should make this call to cleanup, but it makes program slower...
+	// we should make this call to cleanup, but it program consume more CPU and doesnt seem to bring any advantage
 	//Gdiplus::GdiplusShutdown(gdiplusToken);
 
 }

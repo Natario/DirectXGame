@@ -65,3 +65,8 @@ void Enemy::Draw(Graphics& gfx) const
 
 }
 
+void Enemy::DrawAlternative(Graphics& gfx) const
+{
+	TextDrawer::drawImage(gfx, L"..\\img\\bomb.png", x - halfsize, y - halfsize);
+}
+

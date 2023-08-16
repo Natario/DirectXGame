@@ -13,5 +13,6 @@ public:
 	
 	void UpdatePosition(MainWindow& wnd) override;
 	void Draw(class Graphics& gfx) const override;
+	void DrawAlternative(class Graphics& gfx) const;
 };
 

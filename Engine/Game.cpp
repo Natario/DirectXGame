@@ -58,20 +58,22 @@ void Game::UpdateModel()
 
 	// COLLISION DETECTION
 	// 
-	// detect if the middle of player (crosshair) is on top of any enemy
-	for (auto& enemy : enemies) {
-		if (isOverlapping(player, enemy) && enemy.isAlive)
-		{
-			// in mode runaway, if player hits an enemy, he dies, so restart level
-			// in normal mode, if player hits spacebar or mouse button (shoots) while on top of an enemy, kill enemy
-			if (isModeRunaway)
+	// detect if the middle of player (crosshair) is on top of any enemy (after a cooldown period)
+	if (gracePeriodTimer <= 0)
+	{
+		for (auto& enemy : enemies) {
+			if (isOverlapping(player, enemy) && enemy.isAlive)
 			{
-				createRandomFood(currentLevel);
-				createRandomEnemies(currentLevel);
-				break;
+				// in mode runaway, if player hits an enemy, he dies, so restart level
+				// in normal mode, if player hits spacebar or mouse button (shoots) while on top of an enemy, kill enemy
+				if (isGameModeRunaway)
+				{
+					isGameOver = true;
+					break;
+				}
+				else if (wnd.kbd.KeyIsPressed(VK_SPACE) || wnd.mouse.LeftIsPressed())
+					enemy.isAlive = false;
 			}
-			else if(wnd.kbd.KeyIsPressed(VK_SPACE) || wnd.mouse.LeftIsPressed())
-				enemy.isAlive = false;
 		}
 	}
 
@@ -81,12 +83,13 @@ void Game::UpdateModel()
 	// 
 	// in mode runaway, increase level when player gets food,
 	// in normal mode, increase level when there are no enemies alive
-	if (isModeRunaway)
+	if (isGameModeRunaway)
 	{
 		if (isOverlapping(player, food))
 		{
 			createRandomFood(++currentLevel);
 			createRandomEnemies(currentLevel);
+			gracePeriodTimer = gracePeriodTime;
 		}
 
 	}
@@ -100,9 +103,27 @@ void Game::UpdateModel()
 			}
 		);
 		if (enemiesAlive == 0)
+		{
 			createRandomEnemies(++currentLevel);
+			gracePeriodTimer = gracePeriodTime;
+		}
 	}
 
+
+	// during grace period, color player green and decrement timer until it reaches zero
+	if (gracePeriodTimer > 0)
+	{
+		player.colorR = 0;
+		player.colorG = 255;
+		player.colorB = 0; 
+		gracePeriodTimer--;
+	}
+	else
+	{
+		player.colorR = 255;
+		player.colorG = 255;
+		player.colorB = 255;
+	}
 
 
 }
@@ -110,21 +131,30 @@ void Game::UpdateModel()
 void Game::ComposeFrame()
 {
 
-	// draw enemies
-	for (auto& enemy : enemies) {
-		if(enemy.isAlive)
-			enemy.Draw(gfx);
+	if (!isGameOver)
+	{
+		// draw enemies
+		for (auto& enemy : enemies) {
+			if(isGameModeRunaway)
+				enemy.DrawAlternative(gfx);
+			else if (enemy.isAlive)
+				enemy.Draw(gfx);
+		}
+
+		// draw food
+		if (isGameModeRunaway)
+			food.Draw(gfx);
+
+		// draw player (after enemies so it appears on top of them)
+		player.Draw(gfx);
+
+		// draw level information
+		TextDrawer::drawLevel(gfx, currentLevel, 20, 20);
 	}
-
-	// draw food
-	if(isModeRunaway)
-		food.Draw(gfx);
-
-	// draw player (after enemies so it appears on top of them)
-	player.Draw(gfx);
-	
-	// draw level information
-	TextDrawer::drawLevel(gfx, currentLevel, 20, 20);
+	else
+	{
+		TextDrawer::drawImage(gfx, L"..\\img\\gameover.png", Graphics::ScreenWidth / 2 - 100, Graphics::ScreenHeight / 2 - 100);
+	}
 
 }
 
@@ -135,17 +165,27 @@ bool Game::isOverlapping(const Player& player, const Actor& enemy) const
 
 void Game::createRandomEnemies(int level)
 {
-	// create enemies in random positions with random speeds but increase amount and speed with level
+	// create enemies in random positions with random speeds but increase their amount and speed with each level
 	std::random_device seed;
 	std::mt19937 gen{ seed() };
 	int maxHalfsize = 50; // we assume enemies are no larger than 50
+	int maxEnemies = 25; // limit the amount of enemies on screen so there is space to move around
 	enemies.clear();
-	for (int i = 0; i < std::min(level, 10) ; i++)
+	for (int i = 0; i < std::min(level, maxEnemies) ; i++)
 	{
 		std::uniform_int_distribution<> distX{ maxHalfsize, Graphics::ScreenWidth - maxHalfsize - 1 };
 		std::uniform_int_distribution<> distY{ maxHalfsize, Graphics::ScreenHeight - maxHalfsize - 1 };
-		std::uniform_int_distribution<> distSpeed{ 1, std::max(1, std::min(level, 4)) }; // don't increase speed too much because it causes motion sickness (max(min()) is like clamp() - https://stackoverflow.com/a/9324086/3174659)
-		enemies.push_back(Enemy{ distX(gen), distY(gen), distSpeed(gen), distSpeed(gen) });
+		// don't increase speed too much because it causes motion sickness (max(min()) is like clamp() - https://stackoverflow.com/a/9324086/3174659)
+		std::uniform_int_distribution<> distSpeed{ 1, std::max(1, std::min(level, 4)) };
+		// for every enemy, change sign of speeds so they dont all move in the same direction
+		if(i % 4 == 0)
+			enemies.push_back(Enemy{ distX(gen), distY(gen), distSpeed(gen), distSpeed(gen) });
+		if (i % 4 == 1)
+			enemies.push_back(Enemy{ distX(gen), distY(gen), -distSpeed(gen), distSpeed(gen) });
+		if (i % 4 == 2)
+			enemies.push_back(Enemy{ distX(gen), distY(gen), distSpeed(gen), -distSpeed(gen) });
+		if (i % 4 == 3)
+			enemies.push_back(Enemy{ distX(gen), distY(gen), -distSpeed(gen), -distSpeed(gen) });
 	}
 }
 
