@@ -21,23 +21,14 @@
 #include "MainWindow.h"
 #include "Game.h"
 #include <random>
+#include <algorithm>
 
 Game::Game( MainWindow& wnd )
 	:
 	wnd( wnd ),
 	gfx( wnd )
 {
-	// create enemies in random positions with random speeds
-	std::random_device seed;
-	std::mt19937 gen{ seed() };
-	int maxHalfsize = 50; // we assume enemies are no larger than 50
-	for (int i = 0; i < enemyAmount; i++)
-	{
-		std::uniform_int_distribution<> distX{ maxHalfsize, Graphics::ScreenWidth - maxHalfsize - 1 };
-		std::uniform_int_distribution<> distY{ maxHalfsize, Graphics::ScreenHeight - maxHalfsize - 1 };
-		std::uniform_int_distribution<> distSpeed{ 1, 3 };
-		enemies.push_back(Enemy{ distX(gen), distY(gen), distSpeed(gen), distSpeed(gen) });
-	}
+	createRandomEnemies(nextLevel++);
 }
 
 void Game::Go()
@@ -50,76 +41,22 @@ void Game::Go()
 
 void Game::UpdateModel()
 {
-	// increase player speed in the direction of key press
-	if (wnd.kbd.KeyIsPressed(VK_UP))
-	{
-		if(player.yVel - player.accel > -player.maxVel)
-			player.yVel -= player.accel;
-	}
-	if (wnd.kbd.KeyIsPressed(VK_RIGHT))
-	{
-		if (player.xVel + player.accel < player.maxVel)
-			player.xVel += player.accel;
-	}
-	if (wnd.kbd.KeyIsPressed(VK_DOWN))
-	{
-		if (player.yVel + player.accel < player.maxVel)
-			player.yVel += player.accel;
-	}
-	if (wnd.kbd.KeyIsPressed(VK_LEFT))
-	{
-		if (player.xVel - player.accel > -player.maxVel)
-			player.xVel -= player.accel;
-	}
 	
-	// decrease player speed if no key pressed
-	if (!wnd.kbd.KeyIsPressed(VK_UP) && player.yVel < 0)
-		player.yVel += player.accel;
-	if (!wnd.kbd.KeyIsPressed(VK_DOWN) && player.yVel > 0)
-		player.yVel -= player.accel;
-	if (!wnd.kbd.KeyIsPressed(VK_RIGHT) && player.xVel > 0)
-		player.xVel -= player.accel;
-	if (!wnd.kbd.KeyIsPressed(VK_LEFT) && player.xVel < 0)
-		player.xVel += player.accel;
-	
-	// update position of player depending on speed only if new position is not outside screen, otherwise stop the movement
-	if (player.canMoveHorizontally())
-		player.x += player.xVel;
-	else
-		player.xVel = 0;
-	if (player.canMoveVertically())
-		player.y += player.yVel;
-	else
-		player.yVel = 0;
+	// update position of player depending, possibly, on input
+	player.UpdatePosition(wnd);
 
-	// mouse movement
-	if (wnd.mouse.IsInWindow() && (wnd.mouse.GetPosX() > 0 + player.halfsize) && (wnd.mouse.GetPosX() < Graphics::ScreenWidth - player.halfsize) &&
-								  (wnd.mouse.GetPosY() > 0 + player.halfsize) && (wnd.mouse.GetPosY() < Graphics::ScreenHeight - player.halfsize))
-	{
-		ShowCursor(false);
-		player.x = wnd.mouse.GetPosX();
-		player.y = wnd.mouse.GetPosY();
-	}
-
-	// update position of enemies and make them bounce when they hit the screen edge
+	// update position of enemies
 	for (auto& enemy : enemies) {
-		if (enemy.canMoveHorizontally())
-			enemy.x += enemy.xVel;
-		else
-			enemy.xVel = -enemy.xVel;
-		if (enemy.canMoveVertically())
-			enemy.y += enemy.yVel;
-		else
-			enemy.yVel = -enemy.yVel;
+		enemy.UpdatePosition(wnd);
 	}
 	
-	// detect colision of player with enemy
+	// detect if the middle of player (crosshair) is on top of any enemy
 	bool isColliding = false;
 	for (auto& enemy : enemies) {
 		if (isOverlapping(player, enemy) && enemy.isAlive)
 		{
 			isColliding = true;
-			// if player hits spacebar ou mouse button (shoots), kill enemy
+			// if player hits spacebar or mouse button (shoots) while on top of an enemy, kill enemy
 			if(wnd.kbd.KeyIsPressed(VK_SPACE) || wnd.mouse.LeftIsPressed())
 				enemy.isAlive = false;
 		}
@@ -137,6 +74,43 @@ void Game::UpdateModel()
 		player.colorG = 255;
 		player.colorB = 255;
 	}
+
+	// count number of enemies alive and if there are none go to next level 
+	int enemiesAlive = std::count_if(
+		enemies.cbegin(),
+		enemies.cend(),
+		[](const auto& enemy) {
+			return enemy.isAlive;
+		}
+	);
+	if (enemiesAlive == 0)
+		createRandomEnemies(nextLevel++);
+
+	textDrawer.drawLevelText(gfx, 20, 20);
+	if (nextLevel == 2)
+		textDrawer.drawOneText(gfx, 100, 20);
+	if (nextLevel == 3)
+		textDrawer.drawTwoText(gfx, 100, 20);
+	if (nextLevel == 4)
+		textDrawer.drawThreeText(gfx, 100, 20);
+	if (nextLevel == 5)
+		textDrawer.drawFourText(gfx, 100, 20);
+	if (nextLevel == 6)
+		textDrawer.drawFiveText(gfx, 100, 20);
+	if (nextLevel == 7)
+		textDrawer.drawSixText(gfx, 100, 20);
+	if (nextLevel == 8)
+		textDrawer.drawSevenText(gfx, 100, 20);
+	if (nextLevel == 9)
+		textDrawer.drawEightText(gfx, 100, 20);
+	if (nextLevel == 10)
+		textDrawer.drawNineText(gfx, 100, 20);
+	if (nextLevel == 11)
+	{
+		textDrawer.drawOneText(gfx, 100, 20);
+		textDrawer.drawZeroText(gfx, 120, 20);
+	}
+	//TODO: need to find a more reusable way to draw all possible levels
 
 }
 
@@ -158,4 +132,21 @@ bool Game::isOverlapping(const Player& player, const Enemy& enemy) const
 {
 	return (player.x <= enemy.x + enemy.halfsize) && (player.x >= enemy.x - enemy.halfsize) && (player.y <= enemy.y + enemy.halfsize) && (player.y >= enemy.y - enemy.halfsize);
 }
+
+void Game::createRandomEnemies(int level)
+{
+	// create enemies in random positions with random speeds but increase amount and speed with level
+	std::random_device seed;
+	std::mt19937 gen{ seed() };
+	int maxHalfsize = 50; // we assume enemies are no larger than 50
+	enemies.clear();
+	for (int i = 0; i < std::min(level, 10) ; i++)
+	{
+		std::uniform_int_distribution<> distX{ maxHalfsize, Graphics::ScreenWidth - maxHalfsize - 1 };
+		std::uniform_int_distribution<> distY{ maxHalfsize, Graphics::ScreenHeight - maxHalfsize - 1 };
+		std::uniform_int_distribution<> distSpeed{ 1, std::max(1, std::min(level, 4)) }; // don't increase speed too much because it causes motion sickness (max(min()) is like clamp() - https://stackoverflow.com/a/9324086/3174659)
+		enemies.push_back(Enemy{ distX(gen), distY(gen), distSpeed(gen), distSpeed(gen) });
+	}
+}
+
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Graphics.h"
 #include "Actor.h"
 
 class Player : public Actor
@@ -13,6 +12,7 @@ public:
 	int accel{ 1 };
 	int maxVel{ 5 };
 	
-	void Draw(Graphics& gfx) const override;
+	void UpdatePosition(class MainWindow& wnd) override;
+	void Draw(class Graphics& gfx) const override;
 };
 

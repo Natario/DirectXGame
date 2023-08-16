@@ -25,6 +25,7 @@
 #include "Graphics.h"
 #include "Player.h"
 #include "Enemy.h"
+#include "TextDrawer.h"
 
 class Game
 {
@@ -39,6 +40,7 @@ private:
 	/********************************/
 	/*  User Functions              */
 	bool isOverlapping(const Player& player, const Enemy& enemy) const;
+	void createRandomEnemies(int level);
 	/********************************/
 private:
 	MainWindow& wnd;
@@ -46,7 +48,8 @@ private:
 	/********************************/
 	/*  User Variables              */
 	Player player{ Graphics::ScreenWidth / 2, Graphics::ScreenHeight / 2 };
-	int enemyAmount{ 5 };
 	std::vector<Enemy> enemies{};
+	int nextLevel{ 1 };
+	TextDrawer textDrawer{};
 	/********************************/
 };

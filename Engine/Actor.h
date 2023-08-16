@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Graphics.h"
-
 class Actor
 {
 public:
@@ -23,6 +21,7 @@ public:
 
 	bool canMoveHorizontally();
 	bool canMoveVertically();
-	virtual void Draw(Graphics& gfx) const;
+	virtual void UpdatePosition(class MainWindow& wnd) = 0;
+	virtual void Draw(class Graphics& gfx) const = 0;
 };
 

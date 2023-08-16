@@ -1,5 +1,20 @@
 #include "Enemy.h"
 
+
+void Enemy::UpdatePosition(MainWindow& wnd)
+{
+	// make enemy bounce when it hits the screen edge
+	if (canMoveHorizontally())
+		x += xVel;
+	else
+		xVel = -xVel;
+	if (canMoveVertically())
+		y += yVel;
+	else
+		yVel = -yVel;
+}
+
+
 void Enemy::Draw(Graphics& gfx) const
 {
 
@@ -1350,3 +1365,4 @@ void Enemy::Draw(Graphics& gfx) const
 	gfx.PutPixel(25 + x - 20, 39 + y - 20, 10, 10, 10);
 
 }
+

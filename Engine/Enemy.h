@@ -12,6 +12,7 @@ public:
 
 	bool isAlive{ true };
 	
+	void UpdatePosition(MainWindow& wnd) override;
 	void Draw(Graphics& gfx) const override;
 };
 

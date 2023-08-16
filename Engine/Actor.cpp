@@ -1,4 +1,5 @@
 #include "Actor.h"
+#include "Graphics.h"
 
 bool Actor::canMoveHorizontally()
 {
@@ -14,8 +15,4 @@ bool Actor::canMoveVertically()
 		return true;
 	else
 		return false;
-}
-
-void Actor::Draw(Graphics& gfx) const
-{
 }
