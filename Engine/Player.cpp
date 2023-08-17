@@ -4,7 +4,7 @@
 #include "TextDrawer.h"
 
 
-void Player::UpdatePosition(MainWindow& wnd)
+void Player::UpdatePosition(MainWindow& wnd, bool isGameModeRunaway)
 {
 	// increase player speed in the direction of key press
 	if (wnd.kbd.KeyIsPressed(VK_UP))
@@ -48,13 +48,16 @@ void Player::UpdatePosition(MainWindow& wnd)
 	else
 		yVel = 0;
 
-	// can also use mouse to move the player
-	if (wnd.mouse.IsInWindow() && (wnd.mouse.GetPosX() > 0 + halfsize) && (wnd.mouse.GetPosX() < Graphics::ScreenWidth - halfsize) &&
-		(wnd.mouse.GetPosY() > 0 + halfsize) && (wnd.mouse.GetPosY() < Graphics::ScreenHeight - halfsize))
+	// can also use mouse to move the player in shooting gallery (otherwise player would just move mouse super fast to the next food item while in grace and thus easily avoid enemies
+	if (!isGameModeRunaway)
 	{
-		ShowCursor(false);
-		x = wnd.mouse.GetPosX();
-		y = wnd.mouse.GetPosY();
+		if (wnd.mouse.IsInWindow() && (wnd.mouse.GetPosX() > 0 + halfsize) && (wnd.mouse.GetPosX() < Graphics::ScreenWidth - halfsize) &&
+			(wnd.mouse.GetPosY() > 0 + halfsize) && (wnd.mouse.GetPosY() < Graphics::ScreenHeight - halfsize))
+		{
+			ShowCursor(false);
+			x = wnd.mouse.GetPosX();
+			y = wnd.mouse.GetPosY();
+		}
 	}
 }
 

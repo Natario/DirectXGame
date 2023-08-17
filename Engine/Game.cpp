@@ -44,100 +44,119 @@ void Game::Go()
 void Game::UpdateModel()
 {
 	
-	// POSITION UPDATE
-	// 
-	// update position of player depending, possibly, on input
-	player.UpdatePosition(wnd);
-
-	// update position of enemies
-	for (auto& enemy : enemies) {
-		enemy.UpdatePosition(wnd);
-	}
-	
-
-
-	// COLLISION DETECTION
-	// 
-	// detect if the middle of player (crosshair) is on top of any enemy (after a cooldown period)
-	if (gracePeriodTimer <= 0)
+	if (isStartMenu)
 	{
+		// here ReadKey().GetCode() works better than KeyIsPressed() for some reason..
+		if (wnd.kbd.ReadKey().GetCode() == '1')
+		{
+			isGameModeRunaway = false;
+			isStartMenu = false;
+		}
+		if (wnd.kbd.ReadKey().GetCode() == '2')
+		{
+			isGameModeRunaway = true;
+			isStartMenu = false;
+		}
+		
+	}
+	else if (!isGameOver)
+	{
+		// POSITION UPDATE
+		// 
+		// update position of player depending, possibly, on input
+		player.UpdatePosition(wnd, isGameModeRunaway);
+
+		// update position of enemies
 		for (auto& enemy : enemies) {
-			if (isOverlapping(player, enemy) && enemy.isAlive)
+			enemy.UpdatePosition(wnd, isGameModeRunaway);
+		}
+
+
+
+		// COLLISION DETECTION
+		// 
+		// detect if the middle of player (crosshair) is on top of any enemy (after a cooldown period)
+		if (gracePeriodTimer <= 0)
+		{
+			for (auto& enemy : enemies) {
+				if (isOverlapping(player, enemy) && enemy.isAlive)
+				{
+					// in mode runaway, if player hits an enemy, he dies, so restart level
+					// in normal mode, if player hits spacebar or mouse button (shoots) while on top of an enemy, kill enemy
+					if (isGameModeRunaway)
+					{
+						isGameOver = true;
+						break;
+					}
+					else if (ammo > 0 && reloadingTimer == 0 && (wnd.kbd.KeyIsPressed(VK_SPACE) || wnd.mouse.LeftIsPressed()))
+					{
+						enemy.isAlive = false;
+					}
+				}
+			}
+		}
+
+
+
+		// LEVEL UP CONDITIONS
+		// 
+		// in mode runaway, increase level when player gets food,
+		// in normal mode, increase level when there are no enemies alive
+		if (isGameModeRunaway)
+		{
+			if (gracePeriodTimer <= 0 && isOverlapping(player, food))
 			{
-				// in mode runaway, if player hits an enemy, he dies, so restart level
-				// in normal mode, if player hits spacebar or mouse button (shoots) while on top of an enemy, kill enemy
-				if (isGameModeRunaway)
-				{
-					isGameOver = true;
-					break;
+				createRandomFood(++currentLevel);
+				createRandomEnemies(currentLevel);
+				gracePeriodTimer = gracePeriodTime;
+			}
+
+		}
+		else
+		{
+			int enemiesAlive = std::count_if(
+				enemies.cbegin(),
+				enemies.cend(),
+				[](const auto& enemy) {
+					return enemy.isAlive;
 				}
-				else if (ammo > 0 && reloadingTimer == 0 && (wnd.kbd.KeyIsPressed(VK_SPACE) || wnd.mouse.LeftIsPressed()))
-				{
-					enemy.isAlive = false;
-				}
+			);
+			if (enemiesAlive == 0)
+			{
+				createRandomEnemies(++currentLevel);
+				gracePeriodTimer = gracePeriodTime;
+				ammo = currentLevel + 5;
 			}
 		}
-	}
 
 
-
-	// LEVEL UP CONDITIONS
-	// 
-	// in mode runaway, increase level when player gets food,
-	// in normal mode, increase level when there are no enemies alive
-	if (isGameModeRunaway)
-	{
-		if (isOverlapping(player, food))
+		// TIMERS
+		// 
+		// during grace period, color player green and decrement timer until it reaches zero
+		if (gracePeriodTimer > 0)
 		{
-			createRandomFood(++currentLevel);
-			createRandomEnemies(currentLevel);
-			gracePeriodTimer = gracePeriodTime;
+			player.colorR = 0;
+			player.colorG = 255;
+			player.colorB = 0;
+			gracePeriodTimer--;
+		}
+		else
+		{
+			player.colorR = 255;
+			player.colorG = 255;
+			player.colorB = 255;
 		}
 
-	}
-	else
-	{
-		int enemiesAlive = std::count_if(
-			enemies.cbegin(),
-			enemies.cend(),
-			[](const auto& enemy) {
-				return enemy.isAlive;
-			}
-		);
-		if (enemiesAlive == 0)
+		// if the user is continually shooting, decrease ammo every x frames (reloadingTime) so that he doesnt just leave the button pressed
+		if (ammo > 0 && reloadingTimer == 0 && (wnd.kbd.KeyIsPressed(VK_SPACE) || wnd.mouse.LeftIsPressed()))
 		{
-			createRandomEnemies(++currentLevel);
-			gracePeriodTimer = gracePeriodTime;
-			ammo = currentLevel + 5;
+			ammo--;
+			reloadingTimer = reloadingTime;
 		}
-	}
-
-
-	// during grace period, color player green and decrement timer until it reaches zero
-	if (gracePeriodTimer > 0)
-	{
-		player.colorR = 0;
-		player.colorG = 255;
-		player.colorB = 0; 
-		gracePeriodTimer--;
-	}
-	else
-	{
-		player.colorR = 255;
-		player.colorG = 255;
-		player.colorB = 255;
-	}
-
-
-	// if the user is continually shooting, decrease ammo every x frames (reloadingTime) so that he doesnt just leave the button pressed
-	if (ammo > 0 && reloadingTimer == 0 && (wnd.kbd.KeyIsPressed(VK_SPACE) || wnd.mouse.LeftIsPressed()))
-	{
-		ammo--;
-		reloadingTimer = reloadingTime;
-	}
-	if (reloadingTimer > 0)
-	{
-		reloadingTimer--;
+		if (reloadingTimer > 0)
+		{
+			reloadingTimer--;
+		}
 	}
 
 
@@ -146,7 +165,11 @@ void Game::UpdateModel()
 void Game::ComposeFrame()
 {
 
-	if (!isGameOver)
+	if (isStartMenu)
+	{
+		TextDrawer::drawImage(gfx, L"..\\img\\startmenu.png", 0, 0);
+	}
+	else if(!isGameOver)
 	{
 		// draw enemies
 		for (auto& enemy : enemies) {
@@ -195,8 +218,7 @@ void Game::createRandomEnemies(int level)
 	int maxHalfsize = 50; // we assume enemies are no larger than 50
 	int maxEnemies{ level };
 	if(isGameModeRunaway)
-		maxEnemies = 25; // limit the amount of enemies on screen so there is space to actually run away
-	else
+		maxEnemies = 25; // in runaway mode, limit the amount of enemies on screen so there is space to actually run away
 	enemies.clear();
 	for (int i = 0; i < std::min(level, maxEnemies) ; i++)
 	{

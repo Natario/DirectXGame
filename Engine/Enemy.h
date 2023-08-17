@@ -11,7 +11,7 @@ public:
 
 	bool isAlive{ true };
 	
-	void UpdatePosition(MainWindow& wnd) override;
+	void UpdatePosition(MainWindow& wnd, bool isGameModeRunaway) override;
 	void Draw(class Graphics& gfx) const override;
 	void DrawAlternative(class Graphics& gfx) const;
 };

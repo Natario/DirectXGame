@@ -2,7 +2,7 @@
 
 #include "TextDrawer.h"
 
-void Food::UpdatePosition(MainWindow& wnd)
+void Food::UpdatePosition(MainWindow& wnd, bool isGameModeRunaway)
 {
 }
 

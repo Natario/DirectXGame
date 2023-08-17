@@ -3,7 +3,7 @@
 #include "Graphics.h"
 #include "TextDrawer.h"
 
-void Enemy::UpdatePosition(MainWindow& wnd)
+void Enemy::UpdatePosition(MainWindow& wnd, bool isGameModeRunaway)
 {
 	// make enemy bounce when it hits the screen edge
 	if (canMoveHorizontally())

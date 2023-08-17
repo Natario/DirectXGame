@@ -53,8 +53,9 @@ private:
 	std::vector<Enemy> enemies{};
 	int currentLevel{ 0 };
 	Food food{ Graphics::ScreenWidth / 2, Graphics::ScreenHeight / 2 };
-	bool isGameModeRunaway{ false }; // alternative game mode where plaeyr ahs tu runawy from enemies instead of shooting them. also has to eat food to level up
+	bool isGameModeRunaway{ false }; // alternative game mode where player has to run away from enemies instead of shooting them. also has to eat food to level up
 	bool isGameOver{ false };
+	bool isStartMenu{ true };
 	int gracePeriodTime{ 60 * 1 }; // 1 second of grace period (because the timer is decremented every frame i.e. 60 times per second - TODO adapt this to higher FPS rates!
 	int gracePeriodTimer{gracePeriodTime}; // give player a grace period when he levels up because enemies might spawn on top of him and he needs to move away
 	int ammo{ 5 };

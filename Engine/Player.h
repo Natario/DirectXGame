@@ -12,7 +12,7 @@ public:
 	int accel{ 1 };
 	int maxVel{ 5 };
 	
-	void UpdatePosition(class MainWindow& wnd) override;
+	void UpdatePosition(class MainWindow& wnd, bool isGameModeRunaway) override;
 	void Draw(class Graphics& gfx) const override;
 	void DrawAlternative(class Graphics& gfx, bool gracePeriod) const;
 };
