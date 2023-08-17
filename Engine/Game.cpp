@@ -20,8 +20,6 @@
  ******************************************************************************************/
 #include "MainWindow.h"
 #include "Game.h"
-#include <random>
-#include <algorithm>
 
 Game::Game( MainWindow& wnd )
 	:
@@ -47,12 +45,16 @@ void Game::UpdateModel()
 	if (isStartMenu)
 	{
 		// here ReadKey().GetCode() works better than KeyIsPressed() for some reason..
-		if (wnd.kbd.ReadKey().GetCode() == '1')
+		// start menu looks like it has buttons, so let user click on them as well
+		// TODO should make this more generic because if we change the menu image, we have to adapt these values
+		if ((wnd.kbd.ReadKey().GetCode() == '1') ||
+			(wnd.mouse.LeftIsPressed() && (wnd.mouse.GetPosX() > 250) && (wnd.mouse.GetPosX() < 550) && (wnd.mouse.GetPosY() > 205) && (wnd.mouse.GetPosY() < 280)))
 		{
 			isGameModeRunaway = false;
 			isStartMenu = false;
 		}
-		if (wnd.kbd.ReadKey().GetCode() == '2')
+		if ((wnd.kbd.ReadKey().GetCode() == '2') ||
+			(wnd.mouse.LeftIsPressed() && (wnd.mouse.GetPosX() > 250) && (wnd.mouse.GetPosX() < 550) && (wnd.mouse.GetPosY() > 300) && (wnd.mouse.GetPosY() < 370)))
 		{
 			isGameModeRunaway = true;
 			isStartMenu = false;
@@ -75,23 +77,20 @@ void Game::UpdateModel()
 
 		// COLLISION DETECTION
 		// 
-		// detect if the middle of player (crosshair) is on top of any enemy (after a cooldown period)
-		if (gracePeriodTimer <= 0)
-		{
-			for (auto& enemy : enemies) {
-				if (isOverlapping(player, enemy) && enemy.isAlive)
+		// detect if the middle of player is on top of any enemy
+		for (auto& enemy : enemies) {
+			if (isOverlapping(player, enemy) && enemy.isAlive)
+			{
+				// in mode runaway, if player hits an enemy after the grace period, he dies, so restart level
+				// in normal mode, if player hits spacebar or mouse button (shoots) while on top of an enemy, kill enemy
+				if (isGameModeRunaway)
 				{
-					// in mode runaway, if player hits an enemy, he dies, so restart level
-					// in normal mode, if player hits spacebar or mouse button (shoots) while on top of an enemy, kill enemy
-					if (isGameModeRunaway)
-					{
+					if (gracePeriodTimer <= 0)
 						isGameOver = true;
-						break;
-					}
-					else if (ammo > 0 && reloadingTimer == 0 && (wnd.kbd.KeyIsPressed(VK_SPACE) || wnd.mouse.LeftIsPressed()))
-					{
-						enemy.isAlive = false;
-					}
+				}
+				else if (ammo > 0 && reloadingTimer == 0 && (wnd.kbd.KeyIsPressed(VK_SPACE) || wnd.mouse.LeftIsPressed()))
+				{
+					enemy.isAlive = false;
 				}
 			}
 		}
@@ -124,7 +123,6 @@ void Game::UpdateModel()
 			if (enemiesAlive == 0)
 			{
 				createRandomEnemies(++currentLevel);
-				gracePeriodTimer = gracePeriodTime;
 				ammo = currentLevel + 5;
 			}
 		}
@@ -133,7 +131,7 @@ void Game::UpdateModel()
 		// TIMERS
 		// 
 		// during grace period, color player green and decrement timer until it reaches zero
-		if (gracePeriodTimer > 0)
+		if (isGameModeRunaway && gracePeriodTimer > 0)
 		{
 			player.colorR = 0;
 			player.colorG = 255;
@@ -148,10 +146,22 @@ void Game::UpdateModel()
 		}
 
 		// if the user is continually shooting, decrease ammo every x frames (reloadingTime) so that he doesnt just leave the button pressed
-		if (ammo > 0 && reloadingTimer == 0 && (wnd.kbd.KeyIsPressed(VK_SPACE) || wnd.mouse.LeftIsPressed()))
+		if (!isGameModeRunaway && (wnd.kbd.KeyIsPressed(VK_SPACE) || wnd.mouse.LeftIsPressed()))
 		{
-			ammo--;
-			reloadingTimer = reloadingTime;
+			// if he can shoot, play appropriate sound and reset timer (either to know when to shoot again or to play unloaded sound at an interval - if we dont use a timer the sound plays everyframe)
+			if (reloadingTimer == 0)
+			{
+				// if he has ammo, decrease it 
+				if (ammo > 0) {
+					ammo--;
+					shotSound.Play(rng);
+				}
+				else
+				{
+					unloadedSound.Play(rng);
+				}
+				reloadingTimer = reloadingTime;
+			}
 		}
 		if (reloadingTimer > 0)
 		{
@@ -167,7 +177,7 @@ void Game::ComposeFrame()
 
 	if (isStartMenu)
 	{
-		TextDrawer::drawImage(gfx, L"..\\img\\startmenu.png", 0, 0);
+		TextDrawer::drawImage(gfx, L"img\\startmenu.png", 0, 0);
 	}
 	else if(!isGameOver)
 	{
@@ -190,17 +200,17 @@ void Game::ComposeFrame()
 			player.Draw(gfx);
 
 		// draw level and ammo information
-		TextDrawer::drawImage(gfx, L"..\\img\\level.png", 20, 20);
+		TextDrawer::drawImage(gfx, L"img\\level.png", 20, 20);
 		TextDrawer::drawNumber(gfx, currentLevel, 100, 20);
 		if (!isGameModeRunaway)
 		{
-			TextDrawer::drawImage(gfx, L"..\\img\\ammo.png", 400, 20);
+			TextDrawer::drawImage(gfx, L"img\\ammo.png", 400, 20);
 			TextDrawer::drawNumber(gfx, ammo, 480, 20);
 		}
 	}
 	else
 	{
-		TextDrawer::drawImage(gfx, L"..\\img\\gameover.png", Graphics::ScreenWidth / 2 - 100, Graphics::ScreenHeight / 2 - 100);
+		TextDrawer::drawImage(gfx, L"img\\gameover.png", Graphics::ScreenWidth / 2 - 100, Graphics::ScreenHeight / 2 - 100);
 	}
 
 }
@@ -213,8 +223,6 @@ bool Game::isOverlapping(const Player& player, const Actor& enemy) const
 void Game::createRandomEnemies(int level)
 {
 	// create enemies in random positions with random speeds but increase their amount and speed with each level
-	std::random_device seed;
-	std::mt19937 gen{ seed() };
 	int maxHalfsize = 50; // we assume enemies are no larger than 50
 	int maxEnemies{ level };
 	if(isGameModeRunaway)
@@ -228,26 +236,24 @@ void Game::createRandomEnemies(int level)
 		std::uniform_int_distribution<> distSpeed{ 1, std::max(1, std::min(level, 4)) };
 		// for every enemy, change sign of speeds so they dont all move in the same direction
 		if(i % 4 == 0)
-			enemies.push_back(Enemy{ distX(gen), distY(gen), distSpeed(gen), distSpeed(gen) });
+			enemies.push_back(Enemy{ distX(rng), distY(rng), distSpeed(rng), distSpeed(rng) });
 		if (i % 4 == 1)
-			enemies.push_back(Enemy{ distX(gen), distY(gen), -distSpeed(gen), distSpeed(gen) });
+			enemies.push_back(Enemy{ distX(rng), distY(rng), -distSpeed(rng), distSpeed(rng) });
 		if (i % 4 == 2)
-			enemies.push_back(Enemy{ distX(gen), distY(gen), distSpeed(gen), -distSpeed(gen) });
+			enemies.push_back(Enemy{ distX(rng), distY(rng), distSpeed(rng), -distSpeed(rng) });
 		if (i % 4 == 3)
-			enemies.push_back(Enemy{ distX(gen), distY(gen), -distSpeed(gen), -distSpeed(gen) });
+			enemies.push_back(Enemy{ distX(rng), distY(rng), -distSpeed(rng), -distSpeed(rng) });
 	}
 }
 
 void Game::createRandomFood(int level)
 {
 	// create food in ranndom position
-	std::random_device seed;
-	std::mt19937 gen{ seed() };
 	int maxHalfsize = 50; // we assume food is no larger than 50
 	std::uniform_int_distribution<> distX{ maxHalfsize, Graphics::ScreenWidth - maxHalfsize - 1 };
 	std::uniform_int_distribution<> distY{ maxHalfsize, Graphics::ScreenHeight - maxHalfsize - 1 };
-	food.x = distX(gen);
-	food.y = distY(gen);
+	food.x = distX(rng);
+	food.y = distY(rng);
 }
 
 

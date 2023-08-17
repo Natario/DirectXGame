@@ -61,12 +61,12 @@ void Enemy::Draw(Graphics& gfx) const
 
 	// Draw custom target image (https://www.pngwing.com/en/free-png-zhzsw)
 	
-	TextDrawer::drawImage(gfx, L"..\\img\\target.png", x - halfsize, y - halfsize);
+	TextDrawer::drawImage(gfx, L"img\\target.png", x - halfsize, y - halfsize);
 
 }
 
 void Enemy::DrawAlternative(Graphics& gfx) const
 {
-	TextDrawer::drawImage(gfx, L"..\\img\\bomb.png", x - halfsize, y - halfsize);
+	TextDrawer::drawImage(gfx, L"img\\bomb.png", x - halfsize, y - halfsize);
 }
 

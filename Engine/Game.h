@@ -27,6 +27,8 @@
 #include "Enemy.h"
 #include "Food.h"
 #include "TextDrawer.h"
+#include "Sound.h"
+#include "SoundEffect.h"
 
 class Game
 {
@@ -52,6 +54,8 @@ private:
 	Player player{ Graphics::ScreenWidth / 2, Graphics::ScreenHeight / 2 };
 	std::vector<Enemy> enemies{};
 	int currentLevel{ 0 };
+	std::random_device seed;
+	std::mt19937 rng{ seed() }; 
 	Food food{ Graphics::ScreenWidth / 2, Graphics::ScreenHeight / 2 };
 	bool isGameModeRunaway{ false }; // alternative game mode where player has to run away from enemies instead of shooting them. also has to eat food to level up
 	bool isGameOver{ false };
@@ -61,5 +65,7 @@ private:
 	int ammo{ 5 };
 	int reloadingTime{30}; // half a frame in 60FPS - TODO adapt this to higher FPS rates!
 	int reloadingTimer{reloadingTime};
+	SoundEffect shotSound{ L"sounds\\gunshot.wav" };
+	SoundEffect unloadedSound{ L"sounds\\unloadedgun.wav" };
 	/********************************/
 };

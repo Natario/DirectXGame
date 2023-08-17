@@ -82,7 +82,7 @@ void Player::Draw(Graphics& gfx) const
 
 void Player::DrawAlternative(Graphics& gfx, bool gracePeriod) const
 {
-	TextDrawer::drawImage(gfx, L"..\\img\\quagmire.png", x - halfsize, y - halfsize);
+	TextDrawer::drawImage(gfx, L"img\\quagmire.png", x - halfsize, y - halfsize);
 
 	// in grace period, draw a rectangle around player so he knows it's in grace
 	if (gracePeriod)

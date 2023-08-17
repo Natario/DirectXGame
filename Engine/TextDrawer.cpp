@@ -21,25 +21,25 @@ void TextDrawer::drawNumber(Graphics& gfx, int number, int x, int y)
 	for (auto digit : digits)
 	{
 		if (digit == 1)
-			fileName = L"..\\img\\one.png";
+			fileName = L"img\\one.png";
 		if (digit == 2)
-			fileName = L"..\\img\\two.png";
+			fileName = L"img\\two.png";
 		if (digit == 3)
-			fileName = L"..\\img\\three.png";
+			fileName = L"img\\three.png";
 		if (digit == 4)
-			fileName = L"..\\img\\four.png";
+			fileName = L"img\\four.png";
 		if (digit == 5)
-			fileName = L"..\\img\\five.png";
+			fileName = L"img\\five.png";
 		if (digit == 6)
-			fileName = L"..\\img\\six.png";
+			fileName = L"img\\six.png";
 		if (digit == 7)
-			fileName = L"..\\img\\seven.png";
+			fileName = L"img\\seven.png";
 		if (digit == 8)
-			fileName = L"..\\img\\eight.png";
+			fileName = L"img\\eight.png";
 		if (digit == 9)
-			fileName = L"..\\img\\nine.png";
+			fileName = L"img\\nine.png";
 		if (digit == 0)
-			fileName = L"..\\img\\zero.png";
+			fileName = L"img\\zero.png";
 
 		drawImage(gfx, fileName, nextImageX, y);
 
