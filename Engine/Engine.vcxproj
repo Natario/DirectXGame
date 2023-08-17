@@ -150,6 +150,8 @@
     <ClInclude Include="Mouse.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="Sound.h" />
+    <ClInclude Include="SoundEffect.h" />
     <ClInclude Include="TextDrawer.h" />
   </ItemGroup>
   <ItemGroup>
@@ -164,6 +166,7 @@
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="Sound.cpp" />
     <ClCompile Include="TextDrawer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -233,11 +236,6 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="Chili.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ClassDiagram.cd" />
-    <None Include="ClassDiagram1.cd" />
-    <None Include="ClassDiagram2.cd" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
