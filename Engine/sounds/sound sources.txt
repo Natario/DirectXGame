@@ -1,0 +1,21 @@
+used sounds:
+gunshot:
+https://freesound.org/people/Xenonn/sounds/128298/
+empty gun:
+https://freesound.org/people/Nanashi/sounds/104412/
+chew:
+https://freesound.org/people/InspectorJ/sounds/429595/
+gameover:
+https://freesound.org/people/myfox14/sounds/382310/
+
+
+
+other good sounds not being used:
+gunshot:
+https://freesound.org/people/okieactor/sounds/415912/
+empty gun:
+https://freesound.org/people/KlawyKogut/sounds/154934/
+gameover:
+https://freesound.org/people/ScreamStudio/sounds/412168/
+https://freesound.org/people/MATRIXXX_/sounds/524741/
+https://freesound.org/people/Robinhood76/sounds/171200/

@@ -67,5 +67,7 @@ private:
 	int reloadingTimer{reloadingTime};
 	SoundEffect shotSound{ L"sounds\\gunshot.wav" };
 	SoundEffect unloadedSound{ L"sounds\\unloadedgun.wav" };
+	SoundEffect chewSound{ L"sounds\\chew.wav" };
+	Sound gameoverSound{ L"sounds\\gameover.wav" };
 	/********************************/
 };

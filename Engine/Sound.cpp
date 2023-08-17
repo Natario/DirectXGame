@@ -408,11 +408,11 @@ Sound::Sound( const std::wstring & fileName,bool detectLooping,bool manualLoopin
 			}
 			else if( format.wBitsPerSample != sysFormat.wBitsPerSample )
 			{
-				throw CHILI_SOUND_FILE_EXCEPTION( fileName,L"bad wave format (wBitsPerSample)" + std::to_wstring(format.wBitsPerSample) + L" should be " + std::to_wstring(sysFormat.wBitsPerSample));
+				throw CHILI_SOUND_FILE_EXCEPTION( fileName,L"bad wave format (wBitsPerSample): " + std::to_wstring(format.wBitsPerSample) + L" but should be " + std::to_wstring(sysFormat.wBitsPerSample));
 			}
 			else if( format.nSamplesPerSec != sysFormat.nSamplesPerSec )
 			{
-				throw CHILI_SOUND_FILE_EXCEPTION( fileName,L"bad wave format (nSamplesPerSec)" + std::to_wstring(format.nSamplesPerSec) + L" should be " + std::to_wstring(sysFormat.nSamplesPerSec));
+				throw CHILI_SOUND_FILE_EXCEPTION( fileName,L"bad wave format (nSamplesPerSec): " + std::to_wstring(format.nSamplesPerSec) + L" but should be " + std::to_wstring(sysFormat.nSamplesPerSec));
 			}
 			else if( format.wFormatTag != sysFormat.wFormatTag )
 			{

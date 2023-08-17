@@ -46,7 +46,7 @@ void Game::UpdateModel()
 	{
 		// here ReadKey().GetCode() works better than KeyIsPressed() for some reason..
 		// start menu looks like it has buttons, so let user click on them as well
-		// TODO should make this more generic because if we change the menu image, we have to adapt these values
+		// TODO if we change the menu image, we have to adapt the mouse clicking coordinates
 		if ((wnd.kbd.ReadKey().GetCode() == '1') ||
 			(wnd.mouse.LeftIsPressed() && (wnd.mouse.GetPosX() > 250) && (wnd.mouse.GetPosX() < 550) && (wnd.mouse.GetPosY() > 205) && (wnd.mouse.GetPosY() < 280)))
 		{
@@ -86,7 +86,10 @@ void Game::UpdateModel()
 				if (isGameModeRunaway)
 				{
 					if (gracePeriodTimer <= 0)
+					{
+						gameoverSound.Play(1,2);
 						isGameOver = true;
+					}
 				}
 				else if (ammo > 0 && reloadingTimer == 0 && (wnd.kbd.KeyIsPressed(VK_SPACE) || wnd.mouse.LeftIsPressed()))
 				{
@@ -105,6 +108,7 @@ void Game::UpdateModel()
 		{
 			if (gracePeriodTimer <= 0 && isOverlapping(player, food))
 			{
+				chewSound.Play(rng);
 				createRandomFood(++currentLevel);
 				createRandomEnemies(currentLevel);
 				gracePeriodTimer = gracePeriodTime;
