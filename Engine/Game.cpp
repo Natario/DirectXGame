@@ -222,6 +222,11 @@ void Game::ComposeFrame()
 	{
 		TextDrawer::drawImage(gfx, L"img\\gameover.png", Graphics::ScreenWidth / 2 - 100, Graphics::ScreenHeight / 2 - 100);
 	}
+
+
+	// draw player speed for debugging
+	//TextDrawer::drawNumber(gfx, player.xVel, 50, 300);
+	//TextDrawer::drawNumber(gfx, player.yVel, 50, 350);
 	
 }
 

@@ -7,16 +7,25 @@
 
 void TextDrawer::drawNumber(Graphics& gfx, int number, int x, int y)
 {
+	int nextImageX = x;
+
+	// for negative numbers, draw a minus sign
+	if (number < 0) {
+		drawImage(gfx, L"img\\minus.png", nextImageX, y);
+		nextImageX += 20;
+	}
+	
 	// convert integer to array of digits - https://stackoverflow.com/a/15987731/3174659
+	int numberUnsigned = abs(number);	// the code below only works for positive numbers, but we have already drawn a minus sign for negative numbers so it's ok
 	std::vector<int> digits;
 	do
 	{
-		digits.push_back(number % 10);
-		number /= 10;
-	} while (number); // do-while so that if number is zero, we also print it
+		digits.push_back(numberUnsigned % 10);
+		numberUnsigned /= 10;
+	} while (numberUnsigned); // do-while so that if number is zero, we also print it
 	std::reverse(digits.begin(), digits.end());
 
-	int nextImageX = x;
+	// now print the right image for each digit
 	wchar_t* fileName = L"";
 	for (auto digit : digits)
 	{

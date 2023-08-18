@@ -38,10 +38,10 @@ void Player::UpdatePosition(MainWindow& wnd, bool isGameModeRunaway, float delta
 	if (!wnd.kbd.KeyIsPressed(VK_LEFT) && xVel < 0)
 		xVel += accel * deltaTime;
 
-	// avoid player moving very slowly due to float roundings (e.g. 0.01432...)
-	if (xVel > -5 && xVel < 5)
+	// the calculations above do not make velocity exactly zero, so this code forces it for small values
+	if (xVel > -(accel * deltaTime) && xVel < (accel * deltaTime))
 		xVel = 0.f;
-	if (yVel > -5 && yVel < 5)
+	if (yVel > -(accel * deltaTime) && yVel < (accel * deltaTime))
 		yVel = 0.f;
 
 	// update position of player depending on speed only if new position is not outside screen, otherwise stop the movement
