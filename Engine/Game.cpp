@@ -41,45 +41,50 @@ void Game::Go()
 
 void Game::UpdateModel()
 {
+	// delta time: calculate how much time the last frame took and then start counting how much time this frame will take
+	std::chrono::steady_clock::time_point currentFrameTimestamp = std::chrono::steady_clock::now();
+	std::chrono::duration<float> frameTime = currentFrameTimestamp - previousFrameTimestamp;
+	float deltaTime = frameTime.count();
+	previousFrameTimestamp = std::chrono::steady_clock::now();
+
 	
 	if (isStartMenu)
 	{
-		// here ReadKey().GetCode() works better than KeyIsPressed() for some reason..
-		// start menu looks like it has buttons, so let user click on them as well
+		// start menu looks like it has buttons, so let user use the mouse to click on them as well
 		// TODO if we change the menu image, we have to adapt the mouse clicking coordinates
-		if ((wnd.kbd.ReadKey().GetCode() == '1') ||
+		if ((wnd.kbd.KeyIsPressed('1')) ||
 			(wnd.mouse.LeftIsPressed() && (wnd.mouse.GetPosX() > 250) && (wnd.mouse.GetPosX() < 550) && (wnd.mouse.GetPosY() > 205) && (wnd.mouse.GetPosY() < 280)))
 		{
 			isGameModeRunaway = false;
 			isStartMenu = false;
 		}
-		if ((wnd.kbd.ReadKey().GetCode() == '2') ||
+		if ((wnd.kbd.KeyIsPressed('2')) ||
 			(wnd.mouse.LeftIsPressed() && (wnd.mouse.GetPosX() > 250) && (wnd.mouse.GetPosX() < 550) && (wnd.mouse.GetPosY() > 300) && (wnd.mouse.GetPosY() < 370)))
 		{
 			isGameModeRunaway = true;
 			isStartMenu = false;
 		}
-		
+
 	}
 	else if (!isGameOver)
 	{
 		// POSITION UPDATE
 		// 
 		// update position of player depending, possibly, on input
-		player.UpdatePosition(wnd, isGameModeRunaway);
+		player.UpdatePosition(wnd, isGameModeRunaway, deltaTime);
 
 		// update position of enemies
 		for (auto& enemy : enemies) {
-			enemy.UpdatePosition(wnd, isGameModeRunaway);
+			enemy.UpdatePosition(wnd, isGameModeRunaway, deltaTime);
 		}
 
 
 
 		// COLLISION DETECTION
 		// 
-		// detect if the middle of player is on top of any enemy
+		// detect if the center of player is on top of any enemy
 		for (auto& enemy : enemies) {
-			if (isOverlapping(player, enemy) && enemy.isAlive)
+			if (isOverlappingCenter(player, enemy) && enemy.isAlive)
 			{
 				// in mode runaway, if player hits an enemy after the grace period, he dies, so restart level
 				// in normal mode, if player hits spacebar or mouse button (shoots) while on top of an enemy, kill enemy
@@ -106,6 +111,7 @@ void Game::UpdateModel()
 		// in normal mode, increase level when there are no enemies alive
 		if (isGameModeRunaway)
 		{
+			// in mode runaway, let player touch the food just with the tip (in shooting mode, the center of the crosshair needs to overlap the enemy so we use isOverlappingCenter)
 			if (gracePeriodTimer <= 0 && isOverlapping(player, food))
 			{
 				chewSound.Play(rng);
@@ -216,28 +222,40 @@ void Game::ComposeFrame()
 	{
 		TextDrawer::drawImage(gfx, L"img\\gameover.png", Graphics::ScreenWidth / 2 - 100, Graphics::ScreenHeight / 2 - 100);
 	}
-
+	
 }
 
 bool Game::isOverlapping(const Player& player, const Actor& enemy) const
 {
-	return (player.x <= enemy.x + enemy.halfsize) && (player.x >= enemy.x - enemy.halfsize) && (player.y <= enemy.y + enemy.halfsize) && (player.y >= enemy.y - enemy.halfsize);
+	return (player.x - player.halfsize <= enemy.x + enemy.halfsize) && (player.x + player.halfsize >= enemy.x - enemy.halfsize) &&
+			(player.y - player.halfsize <= enemy.y + enemy.halfsize) && (player.y + player.halfsize >= enemy.y - enemy.halfsize);
+}
+
+bool Game::isOverlappingCenter(const Player& player, const Actor& enemy) const
+{
+	return (player.x <= enemy.x + enemy.halfsize) && (player.x >= enemy.x - enemy.halfsize) &&
+			(player.y <= enemy.y + enemy.halfsize) && (player.y >= enemy.y - enemy.halfsize);
 }
 
 void Game::createRandomEnemies(int level)
 {
 	// create enemies in random positions with random speeds but increase their amount and speed with each level
-	int maxHalfsize = 50; // we assume enemies are no larger than 50
+	float maxHalfsize = 50; // we assume enemies are no larger than 50
 	int maxEnemies{ level };
-	if(isGameModeRunaway)
-		maxEnemies = 25; // in runaway mode, limit the amount of enemies on screen so there is space to actually run away
+	float minEnemySpeed{ 100 };
+	float maxEnemySpeed{ 300 };
+	if (isGameModeRunaway)
+	{
+		maxEnemies = 20; // in runaway mode, limit the amount of enemies on screen so there is space to actually run away
+		maxEnemySpeed = 200; // in runaway mode, make enemies a bit slower than in shooting mode, otherwise it's too hard
+	}
 	enemies.clear();
 	for (int i = 0; i < std::min(level, maxEnemies) ; i++)
 	{
-		std::uniform_int_distribution<> distX{ maxHalfsize, Graphics::ScreenWidth - maxHalfsize - 1 };
-		std::uniform_int_distribution<> distY{ maxHalfsize, Graphics::ScreenHeight - maxHalfsize - 1 };
+		std::uniform_real_distribution<float> distX{ maxHalfsize, Graphics::ScreenWidth - maxHalfsize - 1 };
+		std::uniform_real_distribution<float> distY{ maxHalfsize, Graphics::ScreenHeight - maxHalfsize - 1 };
 		// don't increase speed too much because it causes motion sickness (max(min()) is like clamp() - https://stackoverflow.com/a/9324086/3174659)
-		std::uniform_int_distribution<> distSpeed{ 1, std::max(1, std::min(level, 4)) };
+		std::uniform_real_distribution<float> distSpeed{ minEnemySpeed, std::max(minEnemySpeed, std::min(level*100.0f, maxEnemySpeed)) };
 		// for every enemy, change sign of speeds so they dont all move in the same direction
 		if(i % 4 == 0)
 			enemies.push_back(Enemy{ distX(rng), distY(rng), distSpeed(rng), distSpeed(rng) });
@@ -253,9 +271,9 @@ void Game::createRandomEnemies(int level)
 void Game::createRandomFood(int level)
 {
 	// create food in ranndom position
-	int maxHalfsize = 50; // we assume food is no larger than 50
-	std::uniform_int_distribution<> distX{ maxHalfsize, Graphics::ScreenWidth - maxHalfsize - 1 };
-	std::uniform_int_distribution<> distY{ maxHalfsize, Graphics::ScreenHeight - maxHalfsize - 1 };
+	float maxHalfsize = 50; // we assume food is no larger than 50
+	std::uniform_real_distribution<float> distX{ maxHalfsize, Graphics::ScreenWidth - maxHalfsize - 1 };
+	std::uniform_real_distribution<float> distY{ maxHalfsize, Graphics::ScreenHeight - maxHalfsize - 1 };
 	food.x = distX(rng);
 	food.y = distY(rng);
 }

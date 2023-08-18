@@ -4,47 +4,53 @@
 #include "TextDrawer.h"
 
 
-void Player::UpdatePosition(MainWindow& wnd, bool isGameModeRunaway)
+void Player::UpdatePosition(MainWindow& wnd, bool isGameModeRunaway, float deltaTime)
 {
 	// increase player speed in the direction of key press
 	if (wnd.kbd.KeyIsPressed(VK_UP))
 	{
-		if (yVel - accel > -maxVel)
-			yVel -= accel;
+		if (yVel - accel * deltaTime > -maxVel)
+			yVel -= accel * deltaTime;
 	}
 	if (wnd.kbd.KeyIsPressed(VK_RIGHT))
 	{
-		if (xVel + accel < maxVel)
-			xVel += accel;
+		if (xVel + accel * deltaTime < maxVel)
+			xVel += accel * deltaTime;
 	}
 	if (wnd.kbd.KeyIsPressed(VK_DOWN))
 	{
-		if (yVel + accel < maxVel)
-			yVel += accel;
+		if (yVel + accel * deltaTime < maxVel)
+			yVel += accel * deltaTime;
 	}
 	if (wnd.kbd.KeyIsPressed(VK_LEFT))
 	{
-		if (xVel - accel > -maxVel)
-			xVel -= accel;
+		if (xVel - accel * deltaTime > -maxVel)
+			xVel -= accel * deltaTime;
 	}
 
 	// decrease player speed if no key pressed
 	if (!wnd.kbd.KeyIsPressed(VK_UP) && yVel < 0)
-		yVel += accel;
+		yVel += accel * deltaTime;
 	if (!wnd.kbd.KeyIsPressed(VK_DOWN) && yVel > 0)
-		yVel -= accel;
+		yVel -= accel * deltaTime;
 	if (!wnd.kbd.KeyIsPressed(VK_RIGHT) && xVel > 0)
-		xVel -= accel;
+		xVel -= accel * deltaTime;
 	if (!wnd.kbd.KeyIsPressed(VK_LEFT) && xVel < 0)
-		xVel += accel;
+		xVel += accel * deltaTime;
+
+	// avoid player moving very slowly due to float roundings (e.g. 0.01432...)
+	if (xVel > -5 && xVel < 5)
+		xVel = 0.f;
+	if (yVel > -5 && yVel < 5)
+		yVel = 0.f;
 
 	// update position of player depending on speed only if new position is not outside screen, otherwise stop the movement
-	if (canMoveHorizontally())
-		x += xVel;
+	if (canMoveHorizontally(deltaTime))
+		x += xVel * deltaTime;
 	else
 		xVel = 0;
-	if (canMoveVertically())
-		y += yVel;
+	if (canMoveVertically(deltaTime))
+		y += yVel * deltaTime;
 	else
 		yVel = 0;
 
@@ -55,8 +61,8 @@ void Player::UpdatePosition(MainWindow& wnd, bool isGameModeRunaway)
 			(wnd.mouse.GetPosY() > 0 + halfsize) && (wnd.mouse.GetPosY() < Graphics::ScreenHeight - halfsize))
 		{
 			ShowCursor(false);
-			x = wnd.mouse.GetPosX();
-			y = wnd.mouse.GetPosY();
+			x = (float) wnd.mouse.GetPosX();
+			y = (float) wnd.mouse.GetPosY();
 		}
 	}
 }
@@ -69,20 +75,20 @@ void Player::Draw(Graphics& gfx) const
 	// horizontal line
 	for (int i = 0; i <= halfsize / 2 + 5; i++)
 	{
-		gfx.PutPixel(x - halfsize + i, y, colorR, colorG, colorB);
-		gfx.PutPixel(x + halfsize - i, y, colorR, colorG, colorB);
+		gfx.PutPixel(int(x - halfsize) + i, (int) y, colorR, colorG, colorB);
+		gfx.PutPixel(int(x + halfsize) - i, (int) y, colorR, colorG, colorB);
 	}
 	// vertical line
 	for (int i = 0; i <= halfsize / 2 + 5; i++)
 	{
-		gfx.PutPixel(x, y - halfsize + i, colorR, colorG, colorB);
-		gfx.PutPixel(x, y + halfsize - i, colorR, colorG, colorB);
+		gfx.PutPixel((int) x, int(y - halfsize) + i, colorR, colorG, colorB);
+		gfx.PutPixel((int) x, int(y + halfsize) - i, colorR, colorG, colorB);
 	}
 }
 
 void Player::DrawAlternative(Graphics& gfx, bool gracePeriod) const
 {
-	TextDrawer::drawImage(gfx, L"img\\quagmire.png", x - halfsize, y - halfsize);
+	TextDrawer::drawImage(gfx, L"img\\quagmire.png", int(x - halfsize), int(y - halfsize));
 
 	// in grace period, draw a rectangle around player so he knows it's in grace
 	if (gracePeriod)
@@ -90,26 +96,26 @@ void Player::DrawAlternative(Graphics& gfx, bool gracePeriod) const
 		// top line
 		for (int i = 0; i <= halfsize / 2; i++)
 		{
-			gfx.PutPixel(x - halfsize + i, y - halfsize, 0, 255, 0);
-			gfx.PutPixel(x + halfsize - i, y - halfsize, 0, 255, 0);
+			gfx.PutPixel(int(x - halfsize) + i, int(y - halfsize), 0, 255, 0);
+			gfx.PutPixel(int(x + halfsize) - i, int(y - halfsize), 0, 255, 0);
 		}
 		// bottom line
 		for (int i = 0; i <= halfsize / 2; i++)
 		{
-			gfx.PutPixel(x - halfsize + i, y + halfsize, 0, 255, 0);
-			gfx.PutPixel(x + halfsize - i, y + halfsize, 0, 255, 0);
+			gfx.PutPixel(int(x - halfsize) + i, int(y + halfsize), 0, 255, 0);
+			gfx.PutPixel(int(x + halfsize) - i, int(y + halfsize), 0, 255, 0);
 		}
 		// left line
 		for (int i = 0; i <= halfsize / 2; i++)
 		{
-			gfx.PutPixel(x - halfsize, y - halfsize + i, 0, 255, 0);
-			gfx.PutPixel(x - halfsize, y + halfsize - i, 0, 255, 0);
+			gfx.PutPixel(int(x - halfsize), int(y - halfsize) + i, 0, 255, 0);
+			gfx.PutPixel(int(x - halfsize), int(y + halfsize) - i, 0, 255, 0);
 		}
 		// right line
 		for (int i = 0; i <= halfsize / 2; i++)
 		{
-			gfx.PutPixel(x + halfsize, y - halfsize + i, 0, 255, 0);
-			gfx.PutPixel(x + halfsize, y + halfsize - i, 0, 255, 0);
+			gfx.PutPixel(int(x + halfsize), int(y - halfsize) + i, 0, 255, 0);
+			gfx.PutPixel(int(x + halfsize), int(y + halfsize) - i, 0, 255, 0);
 		}
 	}
 }

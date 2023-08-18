@@ -3,15 +3,15 @@
 #include "Graphics.h"
 #include "TextDrawer.h"
 
-void Enemy::UpdatePosition(MainWindow& wnd, bool isGameModeRunaway)
+void Enemy::UpdatePosition(MainWindow& wnd, bool isGameModeRunaway, float deltaTime)
 {
 	// make enemy bounce when it hits the screen edge
-	if (canMoveHorizontally())
-		x += xVel;
+	if (canMoveHorizontally(deltaTime))
+		x += xVel * deltaTime;
 	else
 		xVel = -xVel;
-	if (canMoveVertically())
-		y += yVel;
+	if (canMoveVertically(deltaTime))
+		y += yVel * deltaTime;
 	else
 		yVel = -yVel;
 }
@@ -61,12 +61,12 @@ void Enemy::Draw(Graphics& gfx) const
 
 	// Draw custom target image (https://www.pngwing.com/en/free-png-zhzsw)
 	
-	TextDrawer::drawImage(gfx, L"img\\target.png", x - halfsize, y - halfsize);
+	TextDrawer::drawImage(gfx, L"img\\target.png", int(x - halfsize), int(y - halfsize));
 
 }
 
 void Enemy::DrawAlternative(Graphics& gfx) const
 {
-	TextDrawer::drawImage(gfx, L"img\\bomb.png", x - halfsize, y - halfsize);
+	TextDrawer::drawImage(gfx, L"img\\bomb.png", int(x - halfsize), int(y - halfsize));
 }
 

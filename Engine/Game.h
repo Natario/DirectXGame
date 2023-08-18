@@ -43,6 +43,7 @@ private:
 	/********************************/
 	/*  User Functions              */
 	bool isOverlapping(const Player& player, const Actor& enemy) const;
+	bool isOverlappingCenter(const Player& player, const Actor& enemy) const;
 	void createRandomEnemies(int level);
 	void createRandomFood(int level);
 	/********************************/
@@ -60,7 +61,7 @@ private:
 	bool isGameModeRunaway{ false }; // alternative game mode where player has to run away from enemies instead of shooting them. also has to eat food to level up
 	bool isGameOver{ false };
 	bool isStartMenu{ true };
-	int gracePeriodTime{ 60 * 1 }; // 1 second of grace period (because the timer is decremented every frame i.e. 60 times per second - TODO adapt this to higher FPS rates!
+	int gracePeriodTime{ 120 }; // 2 seconds of grace period (because the timer is decremented every frame i.e. 60 times per second - TODO adapt this to higher FPS rates!
 	int gracePeriodTimer{gracePeriodTime}; // give player a grace period when he levels up because enemies might spawn on top of him and he needs to move away
 	int ammo{ 5 };
 	int reloadingTime{30}; // half a frame in 60FPS - TODO adapt this to higher FPS rates!
@@ -69,5 +70,6 @@ private:
 	SoundEffect unloadedSound{ L"sounds\\unloadedgun.wav" };
 	SoundEffect chewSound{ L"sounds\\chew.wav" };
 	Sound gameoverSound{ L"sounds\\gameover.wav" };
+	std::chrono::steady_clock::time_point previousFrameTimestamp{};
 	/********************************/
 };

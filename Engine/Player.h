@@ -5,14 +5,14 @@
 class Player : public Actor
 {
 public:
-	Player(int x, int y) :
+	Player(float x, float y) :
 		Actor(x, y)
 	{};
 
-	int accel{ 1 };
-	int maxVel{ 5 };
+	int accel{ 1200 };
+	float maxVel{ 300 };
 	
-	void UpdatePosition(class MainWindow& wnd, bool isGameModeRunaway) override;
+	void UpdatePosition(class MainWindow& wnd, bool isGameModeRunaway, float deltaTime) override;
 	void Draw(class Graphics& gfx) const override;
 	void DrawAlternative(class Graphics& gfx, bool gracePeriod) const;
 };

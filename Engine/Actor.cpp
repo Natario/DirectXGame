@@ -1,17 +1,17 @@
 #include "Actor.h"
 #include "Graphics.h"
 
-bool Actor::canMoveHorizontally()
+bool Actor::canMoveHorizontally(float deltaTime)
 {
-	if ((x + xVel > 0 + halfsize) && (x + xVel < Graphics::ScreenWidth - halfsize))
+	if ((x + xVel*deltaTime > 0 + halfsize) && (x + xVel*deltaTime < Graphics::ScreenWidth - halfsize))
 		return true;
 	else
 		return false;
 }
 
-bool Actor::canMoveVertically()
+bool Actor::canMoveVertically(float deltaTime)
 {
-	if ((y + yVel > 0 + halfsize) && (y + yVel < Graphics::ScreenHeight - halfsize))
+	if ((y + yVel*deltaTime > 0 + halfsize) && (y + yVel*deltaTime < Graphics::ScreenHeight - halfsize))
 		return true;
 	else
 		return false;
